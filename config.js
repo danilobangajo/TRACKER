@@ -1,25 +1,5 @@
-// Configuration - Paste your Google Apps Script Web App URL here
-const GOOGLE_SHEETS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwqnEHkM943ag95i_ZzWmopgMLgdKcYp2BIUpib8s42xvAcdgqDlJwvrkXBmaw6Kryh/exec';
 
-function getDeptRevision(dept) {
-    try {
-        const store = typeof storage !== 'undefined' ? storage : localStorage;
-        const v = parseInt(store.getItem(`syncRevision_${dept}`) || '0', 10);
-        return Number.isFinite(v) ? v : 0;
-    } catch (e) {
-        return 0;
-    }
-}
-
-function setDeptRevision(dept, rev) {
-    try {
-        const store = typeof storage !== 'undefined' ? storage : localStorage;
-        const n = parseInt(rev, 10);
-        if (Number.isFinite(n)) store.setItem(`syncRevision_${dept}`, String(n));
-    } catch (e) {
-        // ignore
-    }
-}
+const GOOGLE_SHEETS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx10_aO0NYZLbR6-x2uYMq3Ab1Do0RzpXsVwflL-4NT7FOCVNFvwQnqGKIsWSr_3Tbb/exec';
 
 // Sync to Google Sheets
 async function syncToGoogleSheets(type, data) {
@@ -75,7 +55,6 @@ async function syncFullState() {
                     body: JSON.stringify({
                         type: 'fullState',
                         department: dept,
-                        baseRevision: getDeptRevision(dept),
                         state: { employees: deptEmployees, attendanceData: deptAttendance }
                     })
                 });
@@ -107,8 +86,6 @@ async function loadFromSheets() {
         const store = typeof storage !== 'undefined' ? storage : localStorage;
         store.setItem('employees', JSON.stringify(remoteEmployees));
         store.setItem('attendanceData', JSON.stringify(remoteAttendance));
-        setDeptRevision('rv', data.rv?.revision);
-        setDeptRevision('coms', data.coms?.revision);
         return true;
     } catch (e) {
         console.error('❌ Load from Sheets error:', e);

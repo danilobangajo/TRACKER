@@ -1691,11 +1691,13 @@ document.getElementById('attendanceForm').addEventListener('submit', async funct
 
                 attendanceData[recordIndex] = {
                     ...existingRecord,
+                    timeIn:       timeIn || existingRecord.timeIn,
                     timeOut:      timeOut,
                     totalHours:   totalHours,
                     status:       status
                 };
             } else {
+                if (timeIn) attendanceData[recordIndex].timeIn = timeIn;
                 attendanceData[recordIndex].timeOut    = timeOut;
                 attendanceData[recordIndex].totalHours = totalHours;
                 if (reason) attendanceData[recordIndex].reason = reason;
