@@ -2541,6 +2541,21 @@ function updateWeeklyReportMonthSummary() {
     showMonthSummary(year, month);
 }
 
+// Attendance details modal only: weeks = 5 calendar days each (1–5, 6–10, 11–15, …)
+const DETAIL_MODAL_DAYS_PER_WEEK = 5;
+
+function getDetailModalWeekDayRange(weekNumber, daysInMonth) {
+    if (!weekNumber || weekNumber < 1) return null;
+    const startDay = (weekNumber - 1) * DETAIL_MODAL_DAYS_PER_WEEK + 1;
+    const endDay = Math.min(weekNumber * DETAIL_MODAL_DAYS_PER_WEEK, daysInMonth);
+    if (startDay > daysInMonth) return null;
+    return { startDay, endDay };
+}
+
+function countDetailModalWeeksInMonth(daysInMonth) {
+    return Math.ceil(daysInMonth / DETAIL_MODAL_DAYS_PER_WEEK);
+}
+
 // View employee full month attendance details
 function viewEmployeeMonthDetails(employeeName, month, year) {
     const attendanceData = loadAttendanceData();
@@ -2569,13 +2584,12 @@ function viewEmployeeMonthDetails(employeeName, month, year) {
     modalDiv.className = 'modal fade';
     modalDiv.id = 'employeeDetailsModal';
     modalDiv.tabIndex = -1;
-    // Calculate week ranges for this month
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const weeks = [];
-    for (let w = 1; w <= 4; w++) {
-        const startDay = (w - 1) * 7 + 1;
-        const endDay = Math.min(w * 7, daysInMonth);
-        if (startDay <= daysInMonth) weeks.push({ w, startDay, endDay });
+    const numWeeks = countDetailModalWeeksInMonth(daysInMonth);
+    for (let w = 1; w <= numWeeks; w++) {
+        const range = getDetailModalWeekDayRange(w, daysInMonth);
+        if (range) weeks.push({ w, startDay: range.startDay, endDay: range.endDay });
     }
 
     modalDiv.innerHTML = `
@@ -2668,10 +2682,10 @@ function filterDetailWeek(input, employeeName, month, year) {
         const d = new Date(r.date + 'T00:00:00');
         if (d.getMonth() !== month || d.getFullYear() !== year) return false;
         if (!weekNumber) return true;
+        const range = getDetailModalWeekDayRange(weekNumber, daysInMonth);
+        if (!range) return false;
         const day = d.getDate();
-        const startDay = (weekNumber - 1) * 7 + 1;
-        const endDay = Math.min(weekNumber * 7, daysInMonth);
-        return day >= startDay && day <= endDay;
+        return day >= range.startDay && day <= range.endDay;
     });
 
     records.sort((a, b) => new Date(a.date) - new Date(b.date) || b.id - a.id);
@@ -2686,10 +2700,11 @@ function filterDetailWeek(input, employeeName, month, year) {
             periodLabel.textContent = `${monthName} ${year}`;
             if (weekLabel) weekLabel.textContent = 'All';
         } else {
-            const startDay = (weekNumber - 1) * 7 + 1;
-            const endDay = Math.min(weekNumber * 7, daysInMonth);
-            periodLabel.textContent = `Week ${weekNumber} — ${monthName} ${startDay}-${endDay}, ${year}`;
-            if (weekLabel) weekLabel.textContent = `${monthName} ${startDay}–${endDay}`;
+            const range = getDetailModalWeekDayRange(weekNumber, daysInMonth);
+            if (range) {
+                periodLabel.textContent = `Week ${weekNumber} — ${monthName} ${range.startDay}-${range.endDay}, ${year}`;
+                if (weekLabel) weekLabel.textContent = `${monthName} ${range.startDay}–${range.endDay}`;
+            }
         }
     }
 

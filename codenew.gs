@@ -113,23 +113,25 @@ function writeBlockHeaders(sheet, startRow, year, month, isRV) {
     .setVerticalAlignment('middle')
     .setFontSize(14);
 
-  // ── Row N+1: stat headers + day headers ──────────────────────
-  // Stat headers
+  // ── Row N+1: stat headers (PRESENT, ABSENT, …) + day headers ──
+  // Explicit dark text so labels never inherit #fff from title merges / compact layout after sync.
   sheet.getRange(startRow + 1, startCol, 1, dashColCount)
     .setValues([dashHeaders])
     .setFontWeight('bold')
+    .setFontColor('#212121')
     .setBackground('#f3f3f3')
     .setHorizontalAlignment('center')
     .setVerticalAlignment('middle')
     .setWrap(true)
     .setBorder(true, true, true, true, true, true);
 
-  // Day headers (merged 3 cols each)
+  // Day headers (merged 3 cols each) — e.g. "March 1"
   let col = startCol + dashColCount;
   for (let day = 1; day <= daysInMonth; day++) {
     sheet.getRange(startRow + 1, col, 1, 3).merge()
       .setValue(monthName + ' ' + day)
       .setFontWeight('bold')
+      .setFontColor('#1e3a8a')
       .setBackground('#BFDBFE')
       .setHorizontalAlignment('center')
       .setVerticalAlignment('middle')
@@ -140,14 +142,16 @@ function writeBlockHeaders(sheet, startRow, year, month, isRV) {
   sheet.getRange(startRow + 1, col, 2, 1).merge()
     .setValue('TOTAL DAYS')
     .setFontWeight('bold')
+    .setFontColor('#065f46')
     .setBackground('#D1FAE5')
     .setHorizontalAlignment('center')
     .setVerticalAlignment('middle')
     .setBorder(true, true, true, true, true, true);
 
-  // ── Row N+2: blank under stats + STATUS/TIME IN/TIME OUT ─────
+  // ── Row N+2: under stats + STATUS / TIME IN / TIME OUT (weekly column titles)
   sheet.getRange(startRow + 2, startCol, 1, dashColCount)
     .setBackground('#f3f3f3')
+    .setFontColor('#212121')
     .setBorder(true, true, true, true, true, true);
 
   col = startCol + dashColCount;
@@ -156,6 +160,7 @@ function writeBlockHeaders(sheet, startRow, year, month, isRV) {
       sheet.getRange(startRow + 2, col + i)
         .setValue(lbl)
         .setFontWeight('bold')
+        .setFontColor('#0f172a')
         .setBackground('#E3F2FD')
         .setHorizontalAlignment('center')
         .setVerticalAlignment('middle')
@@ -309,6 +314,55 @@ function normalizeSheetLayoutFromState(sheet, dept, state) {
   updateWeeklyReportFull(sheet, attendance);
 }
 
+// Months to maintain on sheet for this dept: every month that appears in attendance + always current month
+// (so new logs in "this month" get a block even if older data was only in past months).
+function getSortedMonthsForDept(attendance, dept) {
+  const months = {};
+  (attendance || []).forEach(r => {
+    if (!r || !r.date || r.department !== dept) return;
+    const d = new Date(r.date + 'T00:00:00');
+    const k = d.getFullYear() + '-' + d.getMonth();
+    months[k] = { y: d.getFullYear(), mo: d.getMonth() };
+  });
+  const now = new Date();
+  const nk = now.getFullYear() + '-' + now.getMonth();
+  months[nk] = { y: now.getFullYear(), mo: now.getMonth() };
+  return Object.values(months).sort((a, b) => (b.y * 12 + b.mo) - (a.y * 12 + a.mo));
+}
+
+// Update sheet without clearing other month blocks — only touches months present in state (+ current month).
+// Other months already on the sheet (e.g. old March) are left unchanged.
+function syncSheetFromStateIncremental(sheet, dept, state) {
+  const isRV = sheet.getName() === 'RV';
+  const attendance = (state && state.attendanceData) ? state.attendanceData : [];
+  const employees = (state && state.employees) ? state.employees : [];
+  ensureSheetReady(sheet);
+
+  const sortedMonths = getSortedMonthsForDept(attendance, dept);
+  const deptRecords = attendance.filter(r => r && r.department === dept);
+
+  sortedMonths.forEach(({ y, mo }) => {
+    getOrCreateBlock(sheet, y, mo, isRV);
+  });
+
+  sortedMonths.forEach(({ y, mo }) => {
+    const monthStats = buildDashStats(employees, attendance, dept, y, mo);
+    updateDashboard(sheet, monthStats, y, mo);
+  });
+
+  const blocks = findMonthBlocks(sheet);
+  sortedMonths.forEach(({ y, mo }) => {
+    const block = blocks.find(b => b.year === y && b.monthNum === mo);
+    if (block) {
+      try {
+        updateWeeklyReportOneBlock(sheet, block, deptRecords, isRV);
+      } catch (e) {
+        Logger.log('updateWeeklyReportOneBlock error: ' + e);
+      }
+    }
+  });
+}
+
 // Apply a compact, consistent visual style for one month block.
 // This keeps all blocks aligned with the clean "April" look.
 function applyCompactLayoutToBlock(sheet, blockStartRow, isRV, year, month) {
@@ -323,10 +377,15 @@ function applyCompactLayoutToBlock(sheet, blockStartRow, isRV, year, month) {
       break;
     }
   }
-  const rowsInBlock = Math.max(3, nextStart - blockStartRow);
-  sheet.getRange(blockStartRow, 2, rowsInBlock, totalCols)
-    .setVerticalAlignment('middle')
-    .setFontSize(8);
+  // Do not format header rows (0–2): setFontSize/setVerticalAlignment on merged title + subheaders
+  // was turning PRESENT/ABSENT and STATUS/TIME IN/TIME OUT text white or illegible after sync/reload.
+  const headerRowCount = 3;
+  const dataRowCount = Math.max(0, nextStart - (blockStartRow + headerRowCount));
+  if (dataRowCount > 0) {
+    sheet.getRange(blockStartRow + headerRowCount, 2, dataRowCount, totalCols)
+      .setVerticalAlignment('middle')
+      .setFontSize(8);
+  }
 
   // Compact row heights to avoid "bloated" older blocks.
   sheet.setRowHeightsForced(blockStartRow, 1, 20);
@@ -468,8 +527,13 @@ function doPost(e) {
 
       props.setProperty('appdata_' + dept, JSON.stringify(data.state));
       props.setProperty(revKey, String(currentRevision + 1));
-      // Normalize whole sheet layout from current full state (same data, cleaned order/format).
-      normalizeSheetLayoutFromState(sheet, dept, data.state);
+      // Default: incremental — only months in state (+ current month) are updated; other blocks untouched.
+      // Set sheetRebuildFull: true to wipe and rebuild entire tab (old behavior).
+      if (data.sheetRebuildFull === true) {
+        normalizeSheetLayoutFromState(sheet, dept, data.state);
+      } else {
+        syncSheetFromStateIncremental(sheet, dept, data.state);
+      }
     }
 
     // Import manually-edited weekly report cells back into PropertiesService state
@@ -729,6 +793,80 @@ function updateWeeklyReportFull(sheet, records) {
     Logger.log('WeeklyFull written: ' + mk + ' — ' + getEmpRowsInBlock(sheet, block.startRow, nameCol).length + ' employees');
     try { applyCompactLayoutToBlock(sheet, block.startRow, isRV, y, mo); } catch (e) { Logger.log('applyCompactLayoutToBlock (weeklyFull) error: ' + e); }
   });
+}
+
+// Weekly cells + headers for a single month block only (used by incremental fullState).
+function updateWeeklyReportOneBlock(sheet, block, deptRecords, isRV) {
+  ensureSheetReady(sheet);
+  const dashCount = getDashHeaders(isRV).length;
+  const nameCol = 1 + dashCount;
+  const mk = block.key;
+  const [y, mo] = mk.split('-').map(Number);
+
+  const monthData = {};
+  (deptRecords || []).forEach(r => {
+    if (!r.date || !r.name) return;
+    const d = new Date(r.date + 'T00:00:00');
+    if (d.getFullYear() + '-' + d.getMonth() !== mk) return;
+    const normName = r.name.toString().replace(/\s+/g, ' ').trim().toUpperCase();
+    if (!monthData[normName]) monthData[normName] = {};
+    monthData[normName][r.date] = r;
+  });
+
+  try {
+    writeBlockHeaders(sheet, block.startRow, y, mo, isRV);
+  } catch (e) {
+    Logger.log('writeBlockHeaders (oneBlock) error: ' + e);
+  }
+  const daysInMonth = new Date(y, mo + 1, 0).getDate();
+  const dailyStartCol = 2 + dashCount;
+
+  getEmpRowsInBlock(sheet, block.startRow, nameCol).forEach(({ name, row }) => {
+    const normSheetName = (name || '').toString().replace(/\s+/g, ' ').trim().toUpperCase();
+    const empRecs = monthData[normSheetName] || {};
+    let totalDays = 0;
+    let col = dailyStartCol;
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateStr = y + '-' + String(mo + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+      const rec = empRecs[dateStr];
+
+      sheet.getRange(row, col, 1, 3)
+        .clearContent().clearFormat()
+        .setBorder(true, true, true, true, true, true)
+        .setHorizontalAlignment('center')
+        .setVerticalAlignment('middle');
+
+      if (rec) {
+        const si = getStatusInfo(rec.status);
+        const code = si ? si.code : (rec.status || '');
+        sheet.getRange(row, col).setValue(code);
+        sheet.getRange(row, col + 1).setValue(fmtT(rec.timeIn));
+        sheet.getRange(row, col + 2).setValue(fmtT(rec.timeOut));
+        if (si) sheet.getRange(row, col, 1, 3).setBackground(si.bg).setFontColor(si.text).setFontWeight('bold');
+        if (/(present|late|undertime|overtime)/i.test(rec.status || '')) totalDays++;
+      }
+      col += 3;
+    }
+
+    const tdCell = sheet.getRange(row, col);
+    if (totalDays > 0) {
+      tdCell.setValue(totalDays + (totalDays === 1 ? ' day' : ' days'))
+        .setBackground('#D1FAE5').setFontWeight('bold')
+        .setHorizontalAlignment('center').setVerticalAlignment('middle')
+        .setBorder(true, true, true, true, true, true);
+    } else {
+      tdCell.clearContent().clearFormat()
+        .setBorder(true, true, true, true, true, true)
+        .setHorizontalAlignment('center').setVerticalAlignment('middle');
+    }
+  });
+
+  try {
+    applyCompactLayoutToBlock(sheet, block.startRow, isRV, y, mo);
+  } catch (e) {
+    Logger.log('applyCompactLayoutToBlock (oneBlock) error: ' + e);
+  }
 }
 
 // ── updateWeeklyReport ────────────────────────────────────────

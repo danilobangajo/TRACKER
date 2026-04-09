@@ -1,5 +1,5 @@
 
-const GOOGLE_SHEETS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx10_aO0NYZLbR6-x2uYMq3Ab1Do0RzpXsVwflL-4NT7FOCVNFvwQnqGKIsWSr_3Tbb/exec';
+const GOOGLE_SHEETS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz__U-cElW-p4Kzwy7KFHRB0DUgGtRY_uAPpcTR4o9KuYmEA43XPKn_ztydlYQG1Yvf/exec';
 
 // Sync to Google Sheets
 async function syncToGoogleSheets(type, data) {
@@ -33,9 +33,12 @@ async function syncToGoogleSheets(type, data) {
 }
 
 // Save full app state (employees + attendance) to Google Sheets for cross-device sharing
-// Syncs BOTH departments so all devices always have complete data
-async function syncFullState() {
+// Syncs BOTH departments so all devices always have complete data.
+// By default the server updates only months that appear in data + current month (incremental sheet).
+// Pass { sheetRebuildFull: true } to force full tab wipe/rebuild (use sparingly).
+async function syncFullState(options) {
     if (!GOOGLE_SHEETS_WEB_APP_URL || GOOGLE_SHEETS_WEB_APP_URL === 'PASTE_YOUR_WEB_APP_URL_HERE') return;
+    const opts = options && typeof options === 'object' ? options : {};
     const store = typeof storage !== 'undefined' ? storage : localStorage;
     const allEmployees = JSON.parse(store.getItem('employees') || '[]');
     const allAttendance = JSON.parse(store.getItem('attendanceData') || '[]');
@@ -55,6 +58,7 @@ async function syncFullState() {
                     body: JSON.stringify({
                         type: 'fullState',
                         department: dept,
+                        sheetRebuildFull: opts.sheetRebuildFull === true,
                         state: { employees: deptEmployees, attendanceData: deptAttendance }
                     })
                 });
