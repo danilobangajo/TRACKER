@@ -7,8 +7,8 @@
     <title>Daily Attendance Tracker</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
 
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.0/font/bootstrap-icons.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" integrity="sha512-t4GWSVZO1eC8BM339Xd7Uphw5s17a86tIZIj8qRxhnKub6WoyhnrxeCIMeAqBPgdZGlCcG2PrZjMc+Wr78+5Xg==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.0/font/bootstrap-icons.min.css" integrity="sha512-rDTlSC+d3sQQeTwkSYI7grcqLTrDZjOEEddzt/7IRA+9Q7x1Zud4j++lH29VSlNrTI0RZ/9d45X6qrFK0RD94w==" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -70,13 +70,26 @@
                                 <label for="employeeName" class="form-label">Employee Name</label>
                                 <div class="d-flex align-items-center gap-2">
                                     <input type="text" class="form-control" id="employeeName" placeholder="Enter employee name" list="employeeList" required aria-label="Employee Name">
-                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="scheduleOverrideBtn" title="Set one-day shift / broken schedule" onclick="openScheduleOverrideModal()" aria-label="Set one-day schedule">
-                                        <i class="bi bi-calendar2-plus"></i>
-                                    </button>
                                 </div>
                                 <datalist id="employeeList"></datalist>
                             </div>
                             
+                            <div class="mb-3" id="scheduleDisplayRow" style="display:none;">
+                                <label class="form-label">Today's Schedule</label>
+                                <div class="schedule-display-card d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="schedule-icon-wrap">
+                                            <i class="bi bi-clock-fill"></i>
+                                        </div>
+                                        <span id="scheduleDisplayText" class="schedule-display-time">--</span>
+                                    </div>
+                                    <button type="button" class="btn-schedule-edit" id="scheduleDisplayEditBtn" onclick="openScheduleOverrideModal()" title="Change today's schedule">
+                                        <i class="bi bi-pencil-fill"></i>
+                                    </button>
+                                </div>
+                                <div id="scheduleDisplayBadge" style="display:none;"></div>
+                            </div>
+
                             <div class="mb-3">
                                 <label for="attendanceDate" class="form-label">Date</label>
                                 <div class="d-flex align-items-center">
@@ -570,7 +583,7 @@
     </div>
 
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js" integrity="sha512-VK2zcvntEufaimc+efOYi622VN5ZacdnufnmX7zIhCPmjhKnOi9ZDMtg1/ug5l183f19gG1/cBstPO4D8N/Img==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="config.js"></script>
     <script src="script.js"></script>
 

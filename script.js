@@ -1738,6 +1738,9 @@ document.getElementById('attendanceForm').addEventListener('submit', async funct
     document.getElementById('employeeName').removeAttribute('data-early-out-record-id');
     document.getElementById('earlyOutBtn').style.display = 'inline-flex';
     document.getElementById('returnWorkBtn').style.display = 'none';
+    // Hide schedule display on reset
+    const schedRowReset = document.getElementById('scheduleDisplayRow');
+    if (schedRowReset) schedRowReset.style.display = 'none';
     // Re-lock timeout, unlock status
     const toField = document.getElementById('timeOut');
     toField.disabled = true;
@@ -2605,7 +2608,7 @@ function viewEmployeeMonthDetails(employeeName, month, year) {
                 <div class="modal-body">
                     <div class="d-flex align-items-center gap-2 mb-3">
                         <label class="mb-0 small fw-semibold">Week</label>
-                        <input type="number" class="form-control form-control-sm" id="detailWeekInput" placeholder="1-${weeks.length}" min="0" max="${weeks.length}" style="width:80px" oninput="filterDetailWeek(this, '${employeeName}', ${month}, ${year})">
+                        <input type="number" class="form-control form-control-sm" id="detailWeekInput" placeholder="1-${weeks.length}" min="0" max="${weeks.length}" style="width:80px">
                         <span class="text-muted small" id="detailWeekLabel"></span>
                     </div>
                     <table class="table table-hover table-bordered">
@@ -2616,6 +2619,14 @@ function viewEmployeeMonthDetails(employeeName, month, year) {
             </div>
         </div>`;
     document.body.appendChild(modalDiv);
+
+    // Add event listener via DOM instead of inline oninput
+    const weekInput = document.getElementById('detailWeekInput');
+    if (weekInput) {
+        weekInput.addEventListener('input', function() {
+            filterDetailWeek(this, employeeName, month, year);
+        });
+    }
 
     modalDiv.addEventListener('hide.bs.modal', () => { if (document.activeElement && modalDiv.contains(document.activeElement)) document.activeElement.blur(); });
 
@@ -2941,8 +2952,30 @@ function checkForgottenTimeout(employeeName) {
 
     if (!openRecord) return false;
 
-    // Get the schedule for the record's date
-    const sched = getScheduleForDate(employee, openRecord.date);
+    // Get the schedule for the record's date.
+    // For overnight shifts, the record is saved on the NEXT day (e.g. time-in 11PM on date 16
+    // gets saved as date 17). The one-day override however is set on date 16 (the shift date).
+    // Detect overnight: timeIn >= 20:00 and record date differs from the shift date.
+    const timeInH = openRecord.timeIn ? parseInt(openRecord.timeIn.split(':')[0], 10) : -1;
+    const isOvernightRecord = timeInH >= 20;
+
+    // ALWAYS check for override on the record date first (highest priority)
+    let sched = getScheduleForDate(employee, openRecord.date);
+
+    // If no override found on record date AND it's an overnight record, check previous date
+    if (isOvernightRecord && sched.source !== 'override-shift' && sched.source !== 'override-broken') {
+        const prevDateObj = new Date(openRecord.date + 'T00:00:00');
+        prevDateObj.setDate(prevDateObj.getDate() - 1);
+        const prevDateStr = prevDateObj.toISOString().split('T')[0];
+        const prevSched = getScheduleForDate(employee, prevDateStr);
+        // Use prev date schedule if it's an override OR if the regular schedule starts early morning (overnight shift)
+        const prevSchedStartH = prevSched?.start ? parseInt(prevSched.start.split(':')[0], 10) : -1;
+        if (prevSched.source === 'override-shift' || prevSched.source === 'override-broken' ||
+            (prevSchedStartH >= 0 && prevSchedStartH < 6)) {
+            sched = prevSched;
+        }
+    }
+
     const schedStart = sched?.start || employee.scheduleStart;
     const schedEnd = sched?.end || employee.scheduleEnd;
     if (!schedStart || !schedEnd) return false;
@@ -2972,8 +3005,20 @@ function checkForgottenTimeout(employeeName) {
     const now = new Date();
     if (now <= overdueThreshold) return false; // still within shift window + grace
 
-    // It's overdue — show the modal
-    const recordDateObj = new Date(openRecord.date + 'T00:00:00');
+    // It's overdue — show the modal.
+    // For overnight shifts with override from previous date, use the override date (shift date)
+    // instead of the record date for the modal message.
+    let displayDate = openRecord.date;
+    if (sched.source === 'override-shift' || sched.source === 'override-broken') {
+        // Check if override is from previous date (overnight case)
+        const prevDateObj = new Date(openRecord.date + 'T00:00:00');
+        prevDateObj.setDate(prevDateObj.getDate() - 1);
+        const prevDateStr = prevDateObj.toISOString().split('T')[0];
+        const checkOverride = getScheduleOverrideForDate(employeeName, prevDateStr, currentDepartment);
+        if (checkOverride) displayDate = prevDateStr;
+    }
+
+    const recordDateObj = new Date(displayDate + 'T00:00:00');
     const dateLabel = recordDateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
     const endDisplay = `${endH.toString().padStart(2,'0')}:${endM.toString().padStart(2,'0')}`;
 
@@ -3050,21 +3095,27 @@ function showReasonModal(reason, dateLabel) {
         modal.className = 'modal fade';
         modal.id = 'reasonViewModal';
         modal.tabIndex = -1;
-        modal.innerHTML = `
-            <div class="modal-dialog modal-sm">
-                <div class="modal-content">
-                    <div class="modal-header bg-warning text-dark py-2">
-                        <h6 class="modal-title"><i class="bi bi-chat-left-text me-2"></i>Reason</h6>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p class="text-muted small mb-1" id="reasonModalDate"></p>
-                        <p class="mb-0" id="reasonModalText"></p>
-                    </div>
-                </div>
-            </div>
-        `;
+        
+        const modalDialog = document.createElement('div');
+        modalDialog.className = 'modal-dialog modal-sm';
+        
+        const modalContent = document.createElement('div');
+        modalContent.className = 'modal-content';
+        
+        const modalHeader = document.createElement('div');
+        modalHeader.className = 'modal-header bg-warning text-dark py-2';
+        modalHeader.innerHTML = '<h6 class="modal-title"><i class="bi bi-chat-left-text me-2"></i>Reason</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button>';
+        
+        const modalBody = document.createElement('div');
+        modalBody.className = 'modal-body';
+        modalBody.innerHTML = '<p class="text-muted small mb-1" id="reasonModalDate"></p><p class="mb-0" id="reasonModalText"></p>';
+        
+        modalContent.appendChild(modalHeader);
+        modalContent.appendChild(modalBody);
+        modalDialog.appendChild(modalContent);
+        modal.appendChild(modalDialog);
         document.body.appendChild(modal);
+        
         modal.addEventListener('hide.bs.modal', function() {
             if (document.activeElement && modal.contains(document.activeElement)) {
                 document.activeElement.blur();
@@ -3264,6 +3315,60 @@ function submitReturnToWork() {
     showNotification(`Return time recorded at ${formatTime(returnTime)}. Select your name again to log Time Out.`, 'success');
 }
 
+// Update schedule display badge in the attendance form
+function updateScheduleDisplay(employeeName, dateStr) {
+    const row = document.getElementById('scheduleDisplayRow');
+    const text = document.getElementById('scheduleDisplayText');
+    if (!row || !text) return;
+
+    if (!employeeName || !dateStr) {
+        row.style.display = 'none';
+        return;
+    }
+
+    const employees = JSON.parse(storage.getItem('employees') || '[]');
+    const employee = employees.find(e => e.name === employeeName && e.department === currentDepartment);
+    if (!employee) {
+        row.style.display = 'none';
+        return;
+    }
+
+    const notes = (employee.scheduleNotes || '').toUpperCase();
+    if (notes.includes('FLOAT')) {
+        text.textContent = 'Float (No Schedule)';
+        row.style.display = '';
+        return;
+    }
+
+    const sched = getScheduleForDate(employee, dateStr);
+    const display = sched?.display || employee.scheduleDisplay || '--';
+    const source = sched?.source || 'regular';
+
+    text.textContent = display;
+
+    // Change badge color based on source
+    const badge = document.getElementById('scheduleDisplayBadge');
+    const card = row.querySelector('.schedule-display-card');
+    const iconWrap = row.querySelector('.schedule-icon-wrap');
+    if (card && iconWrap) {
+        if (source === 'override-shift' || source === 'override-broken') {
+            card.style.background = 'linear-gradient(135deg,#fff7ed,#ffedd5)';
+            card.style.borderColor = '#f59e0b';
+            iconWrap.style.background = 'linear-gradient(135deg,#f59e0b,#d97706)';
+        } else if (source === 'special') {
+            card.style.background = 'linear-gradient(135deg,#f0fdf4,#dcfce7)';
+            card.style.borderColor = '#10b981';
+            iconWrap.style.background = 'linear-gradient(135deg,#10b981,#059669)';
+        } else {
+            card.style.background = 'linear-gradient(135deg,#eef2ff,#e0e7ff)';
+            card.style.borderColor = '#6366f1';
+            iconWrap.style.background = 'linear-gradient(135deg,#6366f1,#4f46e5)';
+        }
+    }
+
+    row.style.display = '';
+}
+
 // Add employee name change listener
 function addEmployeeNameListener() {
     const employeeNameInput = document.getElementById('employeeName');
@@ -3278,7 +3383,11 @@ function addEmployeeNameListener() {
     // triggering time-in/time-out modes prematurely.
     employeeNameInput.addEventListener('input', handleEmployeeNameTyping);
     employeeNameInput.addEventListener('change', handleEmployeeNameChange);
-    dateInput.addEventListener('change', handleEmployeeNameChange);
+    dateInput.addEventListener('change', function() {
+        handleEmployeeNameChange();
+        const name = employeeNameInput.value;
+        if (name) updateScheduleDisplay(name, dateInput.value);
+    });
 
     // If user is resuming after Return, enable submit only when final Time Out is entered
     const timeOutInputGlobal = document.getElementById('timeOut');
@@ -3304,6 +3413,9 @@ function addEmployeeNameListener() {
 
         // Check for forgotten timeout from a previous shift before proceeding
         if (selectedName && checkForgottenTimeout(selectedName)) return;
+
+        // Update schedule display badge
+        updateScheduleDisplay(selectedName, selectedDate);
 
         // Check for resumed session (Return confirmed) awaiting final Time Out
         const resumedRecordId = employeeNameInput.getAttribute('data-existing-record-id');
@@ -3472,6 +3584,10 @@ function addEmployeeNameListener() {
         employeeNameInput.removeAttribute('data-existing-record-id');
         employeeNameInput.removeAttribute('data-early-out-record-id');
         employeeNameInput.removeAttribute('data-flex');
+
+        // Hide schedule display while typing
+        const schedRow = document.getElementById('scheduleDisplayRow');
+        if (schedRow) schedRow.style.display = 'none';
 
         // Reset fields to neutral typing state
         if (timeInInput) {
