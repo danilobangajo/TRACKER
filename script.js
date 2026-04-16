@@ -1480,6 +1480,50 @@ function updateDashboard() {
 // Handle form submission
 document.getElementById('attendanceForm').addEventListener('submit', async function(e) {
     e.preventDefault();
+    // --- Must Time Out check: if user has an open Time In (no Time Out), require Time Out first ---
+    try {
+        const nameEl = document.getElementById('employeeName');
+        const nameVal = (nameEl?.value || '').trim();
+        const dateVal = document.getElementById('attendanceDate')?.value || getLocalISODate();
+        const existingRecordIdAttr = nameEl?.getAttribute('data-existing-record-id');
+        const attendanceDataForCheck = loadAttendanceData();
+        const prevDay = (() => {
+            const d = new Date(dateVal + 'T00:00:00');
+            d.setDate(d.getDate() - 1);
+            const y = d.getFullYear();
+            const mo = String(d.getMonth() + 1).padStart(2, '0');
+            const dy = String(d.getDate()).padStart(2, '0');
+            return `${y}-${mo}-${dy}`;
+        })();
+
+        if (nameVal && !existingRecordIdAttr) {
+            const openRecord = attendanceDataForCheck.find(r =>
+                r.name === nameVal &&
+                (r.date === dateVal || r.date === prevDay) &&
+                r.department === currentDepartment &&
+                r.timeIn && !r.timeOut
+            );
+            if (openRecord) {
+                // Show modal to force Time Out before proceeding
+                const modalEl = document.getElementById('mustTimeoutModal');
+                if (modalEl) {
+                    document.getElementById('mustTimeoutRecordId').value = openRecord.id;
+                    // Leave Time Out empty for manual entry
+                    const timeInput = document.getElementById('mustTimeoutTime');
+                    if (timeInput) timeInput.value = '';
+                    // Prefill Time Out (current time) and clear any previous hidden id
+                    const mustTimeoutRecordId = document.getElementById('mustTimeoutRecordId');
+                    if (mustTimeoutRecordId) mustTimeoutRecordId.value = openRecord.id;
+                    const mustTimeoutMessage = document.getElementById('mustTimeoutMessage');
+                    if (mustTimeoutMessage) mustTimeoutMessage.textContent = `Hello, ${openRecord.name}! Please enter your Time Out for ${openRecord.date}. After saving, proceed to log your next Time In when ready.`;
+                    new bootstrap.Modal(modalEl).show();
+                    return; // stop submit until user sets Time Out
+                }
+            }
+        }
+    } catch (err) {
+        console.error('Must Time Out check error:', err);
+    }
     // Capture current TZ at submit and immediately clear/hide the TZ UI so
     // the panel closes and live updating stops even before submit completes.
     const tzSelectEl = document.getElementById('timezoneSelect');
@@ -3065,6 +3109,64 @@ function submitEarlyOut() {
     showNotification('Emergency out recorded. Use Return when back to continue your shift.', 'info');
 }
 
+// Save the "Must Time Out" entry from modal
+function saveMustTimeout() {
+    const recId = document.getElementById('mustTimeoutRecordId').value;
+    const timeValRaw = document.getElementById('mustTimeoutTime').value;
+    // Only Time Out is required; reason/AMPM removed for this flow
+    const reason = '';
+    if (!recId) { showNotification('Record not found', 'warning'); return; }
+    if (!timeValRaw) { showNotification('Please enter a Time Out', 'warning'); return; }
+
+    // Time value as-is (expects 24-hour `HH:MM` from input)
+    const timeVal = timeValRaw;
+
+    let attendanceData = loadAttendanceData();
+    const idx = attendanceData.findIndex(r => r.id == recId);
+    if (idx === -1) { showNotification('Attendance record not found', 'warning'); bootstrap.Modal.getInstance(document.getElementById('mustTimeoutModal'))?.hide(); return; }
+
+    const record = attendanceData[idx];
+    // Compute total hours between timeIn and timeOut (simple fallback)
+    const inTime = record.timeIn || '';
+    let totalHours = 0;
+    if (inTime) {
+        const inM = toMinutesFromTime(inTime);
+        let outM = toMinutesFromTime(timeVal);
+        if (outM < inM) outM += 24 * 60;
+        totalHours = parseFloat(((outM - inM) / 60).toFixed(2));
+    }
+
+    // Update record
+    attendanceData[idx].timeOut = timeVal;
+    attendanceData[idx].totalHours = totalHours;
+    // No reason required in this forced Time Out flow
+    attendanceData[idx].earlyOut = false;
+
+    if (totalHours >= 10 && /present|late|undertime/i.test(attendanceData[idx].status || '')) {
+        attendanceData[idx].status = 'Overtime';
+    }
+
+    saveAttendanceData(attendanceData);
+    updateDailyReport();
+    updateDashboard();
+    updateEmployeeDatalist();
+    syncDashboardToSheets();
+    syncWeeklyReportToSheets();
+
+    bootstrap.Modal.getInstance(document.getElementById('mustTimeoutModal'))?.hide();
+    // Re-enable submit in case it was disabled when modal opened
+    const submitBtn = document.querySelector('#attendanceForm button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+    }
+    // Clear hidden field
+    const mustTimeoutRecordIdInput = document.getElementById('mustTimeoutRecordId');
+    if (mustTimeoutRecordIdInput) mustTimeoutRecordIdInput.value = '';
+
+    showNotification('Time Out saved. You may now continue.', 'success');
+}
+
 // Open Return to Work modal
 function openReturnToWorkModal() {
     const now = new Date();
@@ -3280,6 +3382,20 @@ function addEmployeeNameListener() {
             if (earlyOutBtn) earlyOutBtn.style.display = 'inline-flex';
             if (returnWorkBtn) returnWorkBtn.style.display = 'none';
             if (returnSection) returnSection.style.display = 'none';
+            // Prefill modal with record id and force the user to Time Out via modal
+            const mustTimeoutRecordIdInput = document.getElementById('mustTimeoutRecordId');
+            const mustTimeoutMessage = document.getElementById('mustTimeoutMessage');
+            const mustTimeoutTime = document.getElementById('mustTimeoutTime');
+            if (mustTimeoutRecordIdInput) mustTimeoutRecordIdInput.value = existingRecord.id;
+            if (mustTimeoutMessage) mustTimeoutMessage.textContent = `${existingRecord.name} has an open Time In on ${existingRecord.date}. Please enter your Time Out for that date. After saving, proceed to log your next Time In when ready.`;
+            // Do not autofill Time Out; user should enter it manually
+            if (mustTimeoutTime) mustTimeoutTime.value = '';
+            if (mustTimeoutMessage) mustTimeoutMessage.textContent = `Hello, ${existingRecord.name}! Please enter your Time Out for ${existingRecord.date}. After saving, proceed to log your next Time In when ready.`;
+            new bootstrap.Modal(document.getElementById('mustTimeoutModal')).show();
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.style.opacity = '0.6';
+            }
             return; // handled
         } else if (earlyOutRecord) {
             // RETURN TO WORK MODE — status locked, show Return button
