@@ -541,6 +541,39 @@ function getScheduleForDate(employee, dateStr, includeOverride = true) {
     return { start: employee.scheduleStart, end: employee.scheduleEnd, display: employee.scheduleDisplay || `${formatTime(employee.scheduleStart)} - ${formatTime(employee.scheduleEnd)}`, source: 'regular' };
 }
 
+// Decide whether to force a missing-timeout prompt for a record on `dateStr`.
+// Rules:
+// - If employee has scheduleNotes containing 'FLOAT' or 'FLEX' => do NOT prompt (unless next day).
+// - If scheduleNotes contains 'WITH 1HR' => allow 1 hour grace after schedule end before prompting.
+// - If schedule end crosses midnight, treat end as next day.
+// - Always prompt if current local date is after record date (next day detection handled where used).
+function shouldForceMissingTimeoutPrompt(employee, dateStr, now) {
+    if (!employee || !dateStr) return false;
+    const notes = employee.scheduleNotes ? employee.scheduleNotes.toUpperCase() : '';
+    if (notes.includes('FLOAT') || notes.includes('FLEX')) return false;
+
+    const sched = getScheduleForDate(employee, dateStr, true);
+    const end = sched && sched.end ? sched.end : null;
+    if (!end) return false;
+
+    const start = sched.start || '00:00';
+    const [sh, sm] = start.split(':').map(Number);
+    const [eh, em] = end.split(':').map(Number);
+
+    // Build end DateTime based on record date
+    const endDt = new Date(dateStr + 'T' + end + ':00');
+    // If end is earlier or equal to start, it's overnight — push end to next day
+    if (eh < sh || (eh === sh && em <= sm)) {
+        endDt.setDate(endDt.getDate() + 1);
+    }
+
+    let graceMinutes = 0;
+    if (notes.includes('WITH 1HR')) graceMinutes = 60;
+    endDt.setMinutes(endDt.getMinutes() + graceMinutes);
+
+    return now >= endDt;
+}
+
 function initScheduleOverrideControls() {
     const modeShift = document.getElementById('overrideModeShift');
     const modeBroken = document.getElementById('overrideModeBroken');
@@ -1504,21 +1537,29 @@ document.getElementById('attendanceForm').addEventListener('submit', async funct
                 r.timeIn && !r.timeOut
             );
             if (openRecord) {
-                // Show modal to force Time Out before proceeding
-                const modalEl = document.getElementById('mustTimeoutModal');
-                if (modalEl) {
-                    document.getElementById('mustTimeoutRecordId').value = openRecord.id;
-                    // Leave Time Out empty for manual entry
-                    const timeInput = document.getElementById('mustTimeoutTime');
-                    if (timeInput) timeInput.value = '';
-                    // Prefill Time Out (current time) and clear any previous hidden id
-                    const mustTimeoutRecordId = document.getElementById('mustTimeoutRecordId');
-                    if (mustTimeoutRecordId) mustTimeoutRecordId.value = openRecord.id;
-                    const mustTimeoutMessage = document.getElementById('mustTimeoutMessage');
-                    if (mustTimeoutMessage) mustTimeoutMessage.textContent = `Hello, ${openRecord.name}! Please enter your Time Out for ${openRecord.date}. After saving, proceed to log your next Time In when ready.`;
-                    new bootstrap.Modal(modalEl).show();
-                    return; // stop submit until user sets Time Out
+                // Decide whether to prompt now: prompt if next day OR schedule end (with grace) has passed
+                const employees = JSON.parse(storage.getItem('employees') || '[]');
+                const selectedEmployee = employees.find(e => e.name === nameVal && e.department === currentDepartment);
+                const now = new Date();
+                const todayIso = getLocalISODate();
+                const isNextDay = todayIso > openRecord.date;
+                const scheduleExpired = shouldForceMissingTimeoutPrompt(selectedEmployee, openRecord.date, now);
+                const shouldPrompt = isNextDay || scheduleExpired;
+
+                if (shouldPrompt) {
+                    const modalEl = document.getElementById('mustTimeoutModal');
+                    if (modalEl) {
+                        document.getElementById('mustTimeoutRecordId').value = openRecord.id;
+                        // Leave Time Out empty for manual entry
+                        const timeInput = document.getElementById('mustTimeoutTime');
+                        if (timeInput) timeInput.value = '';
+                        const mustTimeoutMessage = document.getElementById('mustTimeoutMessage');
+                        if (mustTimeoutMessage) mustTimeoutMessage.textContent = `Hello, ${openRecord.name}! Please enter your Time Out for ${openRecord.date}. After saving, proceed to log your next Time In when ready.`;
+                        new bootstrap.Modal(modalEl).show();
+                        return; // stop submit until user sets Time Out
+                    }
                 }
+                // otherwise allow normal submit flow (no modal)
             }
         }
     } catch (err) {
@@ -3382,19 +3423,26 @@ function addEmployeeNameListener() {
             if (earlyOutBtn) earlyOutBtn.style.display = 'inline-flex';
             if (returnWorkBtn) returnWorkBtn.style.display = 'none';
             if (returnSection) returnSection.style.display = 'none';
-            // Prefill modal with record id and force the user to Time Out via modal
-            const mustTimeoutRecordIdInput = document.getElementById('mustTimeoutRecordId');
-            const mustTimeoutMessage = document.getElementById('mustTimeoutMessage');
-            const mustTimeoutTime = document.getElementById('mustTimeoutTime');
-            if (mustTimeoutRecordIdInput) mustTimeoutRecordIdInput.value = existingRecord.id;
-            if (mustTimeoutMessage) mustTimeoutMessage.textContent = `${existingRecord.name} has an open Time In on ${existingRecord.date}. Please enter your Time Out for that date. After saving, proceed to log your next Time In when ready.`;
-            // Do not autofill Time Out; user should enter it manually
-            if (mustTimeoutTime) mustTimeoutTime.value = '';
-            if (mustTimeoutMessage) mustTimeoutMessage.textContent = `Hello, ${existingRecord.name}! Please enter your Time Out for ${existingRecord.date}. After saving, proceed to log your next Time In when ready.`;
-            new bootstrap.Modal(document.getElementById('mustTimeoutModal')).show();
-            if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.style.opacity = '0.6';
+            // Decide whether to show the forced Time Out modal now
+            const employees = JSON.parse(storage.getItem('employees') || '[]');
+            const selectedEmployee = employees.find(e => e.name === selectedName && e.department === currentDepartment);
+            const now = new Date();
+            const todayIso = getLocalISODate();
+            const isNextDay = todayIso > existingRecord.date;
+            const scheduleExpired = shouldForceMissingTimeoutPrompt(selectedEmployee, existingRecord.date, now);
+            const shouldPrompt = isNextDay || scheduleExpired;
+            if (shouldPrompt) {
+                const mustTimeoutRecordIdInput = document.getElementById('mustTimeoutRecordId');
+                const mustTimeoutMessage = document.getElementById('mustTimeoutMessage');
+                const mustTimeoutTime = document.getElementById('mustTimeoutTime');
+                if (mustTimeoutRecordIdInput) mustTimeoutRecordIdInput.value = existingRecord.id;
+                if (mustTimeoutMessage) mustTimeoutMessage.textContent = `Hello, ${existingRecord.name}! Please enter your Time Out for ${existingRecord.date}. After saving, proceed to log your next Time In when ready.`;
+                if (mustTimeoutTime) mustTimeoutTime.value = '';
+                new bootstrap.Modal(document.getElementById('mustTimeoutModal')).show();
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.style.opacity = '0.6';
+                }
             }
             return; // handled
         } else if (earlyOutRecord) {
