@@ -541,39 +541,6 @@ function getScheduleForDate(employee, dateStr, includeOverride = true) {
     return { start: employee.scheduleStart, end: employee.scheduleEnd, display: employee.scheduleDisplay || `${formatTime(employee.scheduleStart)} - ${formatTime(employee.scheduleEnd)}`, source: 'regular' };
 }
 
-// Decide whether to force a missing-timeout prompt for a record on `dateStr`.
-// Rules:
-// - If employee has scheduleNotes containing 'FLOAT' or 'FLEX' => do NOT prompt (unless next day).
-// - If scheduleNotes contains 'WITH 1HR' => allow 1 hour grace after schedule end before prompting.
-// - If schedule end crosses midnight, treat end as next day.
-// - Always prompt if current local date is after record date (next day detection handled where used).
-function shouldForceMissingTimeoutPrompt(employee, dateStr, now) {
-    if (!employee || !dateStr) return false;
-    const notes = employee.scheduleNotes ? employee.scheduleNotes.toUpperCase() : '';
-    if (notes.includes('FLOAT') || notes.includes('FLEX')) return false;
-
-    const sched = getScheduleForDate(employee, dateStr, true);
-    const end = sched && sched.end ? sched.end : null;
-    if (!end) return false;
-
-    const start = sched.start || '00:00';
-    const [sh, sm] = start.split(':').map(Number);
-    const [eh, em] = end.split(':').map(Number);
-
-    // Build end DateTime based on record date
-    const endDt = new Date(dateStr + 'T' + end + ':00');
-    // If end is earlier or equal to start, it's overnight — push end to next day
-    if (eh < sh || (eh === sh && em <= sm)) {
-        endDt.setDate(endDt.getDate() + 1);
-    }
-
-    let graceMinutes = 0;
-    if (notes.includes('WITH 1HR')) graceMinutes = 60;
-    endDt.setMinutes(endDt.getMinutes() + graceMinutes);
-
-    return now >= endDt;
-}
-
 function initScheduleOverrideControls() {
     const modeShift = document.getElementById('overrideModeShift');
     const modeBroken = document.getElementById('overrideModeBroken');
@@ -1513,58 +1480,6 @@ function updateDashboard() {
 // Handle form submission
 document.getElementById('attendanceForm').addEventListener('submit', async function(e) {
     e.preventDefault();
-    // --- Must Time Out check: if user has an open Time In (no Time Out), require Time Out first ---
-    try {
-        const nameEl = document.getElementById('employeeName');
-        const nameVal = (nameEl?.value || '').trim();
-        const dateVal = document.getElementById('attendanceDate')?.value || getLocalISODate();
-        const existingRecordIdAttr = nameEl?.getAttribute('data-existing-record-id');
-        const attendanceDataForCheck = loadAttendanceData();
-        const prevDay = (() => {
-            const d = new Date(dateVal + 'T00:00:00');
-            d.setDate(d.getDate() - 1);
-            const y = d.getFullYear();
-            const mo = String(d.getMonth() + 1).padStart(2, '0');
-            const dy = String(d.getDate()).padStart(2, '0');
-            return `${y}-${mo}-${dy}`;
-        })();
-
-        if (nameVal && !existingRecordIdAttr) {
-            const openRecord = attendanceDataForCheck.find(r =>
-                r.name === nameVal &&
-                (r.date === dateVal || r.date === prevDay) &&
-                r.department === currentDepartment &&
-                r.timeIn && !r.timeOut
-            );
-            if (openRecord) {
-                // Decide whether to prompt now: prompt if next day OR schedule end (with grace) has passed
-                const employees = JSON.parse(storage.getItem('employees') || '[]');
-                const selectedEmployee = employees.find(e => e.name === nameVal && e.department === currentDepartment);
-                const now = new Date();
-                const todayIso = getLocalISODate();
-                const isNextDay = todayIso > openRecord.date;
-                const scheduleExpired = shouldForceMissingTimeoutPrompt(selectedEmployee, openRecord.date, now);
-                const shouldPrompt = isNextDay || scheduleExpired;
-
-                if (shouldPrompt) {
-                    const modalEl = document.getElementById('mustTimeoutModal');
-                    if (modalEl) {
-                        document.getElementById('mustTimeoutRecordId').value = openRecord.id;
-                        // Leave Time Out empty for manual entry
-                        const timeInput = document.getElementById('mustTimeoutTime');
-                        if (timeInput) timeInput.value = '';
-                        const mustTimeoutMessage = document.getElementById('mustTimeoutMessage');
-                        if (mustTimeoutMessage) mustTimeoutMessage.textContent = `Hello, ${openRecord.name}! Please enter your Time Out for ${openRecord.date}. After saving, proceed to log your next Time In when ready.`;
-                        new bootstrap.Modal(modalEl).show();
-                        return; // stop submit until user sets Time Out
-                    }
-                }
-                // otherwise allow normal submit flow (no modal)
-            }
-        }
-    } catch (err) {
-        console.error('Must Time Out check error:', err);
-    }
     // Capture current TZ at submit and immediately clear/hide the TZ UI so
     // the panel closes and live updating stops even before submit completes.
     const tzSelectEl = document.getElementById('timezoneSelect');
@@ -2997,6 +2912,132 @@ function updateWeeklyReportWithDateFilter(selectedDate) {
     `}).join('');
 }
 
+// Check if the named employee has a forgotten (overdue) timeout record.
+// Returns true if the modal was shown.
+// Correctly handles overnight shifts (e.g. 21:00–06:00, 23:00–09:00, 00:00–10:00)
+// and skips Flex/Float employees who have no fixed end time.
+function checkForgottenTimeout(employeeName) {
+    if (!employeeName) return false;
+
+    const attendanceData = loadAttendanceData();
+    const employees = JSON.parse(storage.getItem('employees') || '[]');
+    const employee = employees.find(e => e.name === employeeName && e.department === currentDepartment);
+    if (!employee) return false;
+
+    // Skip Flex and Float — no fixed end time to enforce
+    const notes = (employee.scheduleNotes || '').toUpperCase();
+    if (notes.includes('FLEX') || notes.includes('FLOAT')) return false;
+
+    // Find the most recent open record (has timeIn, no timeOut, not an earlyOut)
+    const openRecord = attendanceData
+        .filter(r =>
+            r.name === employeeName &&
+            r.department === currentDepartment &&
+            r.timeIn &&
+            !r.timeOut &&
+            !r.earlyOut
+        )
+        .sort((a, b) => b.id - a.id)[0]; // most recent
+
+    if (!openRecord) return false;
+
+    // Get the schedule for the record's date
+    const sched = getScheduleForDate(employee, openRecord.date);
+    const schedStart = sched?.start || employee.scheduleStart;
+    const schedEnd = sched?.end || employee.scheduleEnd;
+    if (!schedStart || !schedEnd) return false;
+
+    const [startH, startM] = schedStart.split(':').map(Number);
+    const [endH, endM] = schedEnd.split(':').map(Number);
+
+    // Build the expected shift-end as an absolute Date object.
+    // Base date = the record's date. If end < start (overnight), end is the NEXT calendar day.
+    const recordDateBase = new Date(openRecord.date + 'T00:00:00');
+    const shiftEndDate = new Date(recordDateBase);
+    shiftEndDate.setHours(endH, endM, 0, 0);
+    const isOvernight = (endH * 60 + endM) < (startH * 60 + startM);
+    if (isOvernight) shiftEndDate.setDate(shiftEndDate.getDate() + 1);
+
+    // If employee has OT in schedule notes, extend shift end by 1 hour
+    // BUT skip OT extension if a one-day override is active (override end is already the final time)
+    const hasOverride = sched?.source === 'override-shift' || sched?.source === 'override-broken';
+    if (!hasOverride && (notes.includes('1HR OT') || notes.includes('1 HR OT'))) {
+        shiftEndDate.setTime(shiftEndDate.getTime() + 60 * 60 * 1000);
+    }
+
+    // Add a 1-hour grace buffer so we don't nag them mid-shift
+    const gracePeriodMs = 60 * 60 * 1000;
+    const overdueThreshold = new Date(shiftEndDate.getTime() + gracePeriodMs);
+
+    const now = new Date();
+    if (now <= overdueThreshold) return false; // still within shift window + grace
+
+    // It's overdue — show the modal
+    const recordDateObj = new Date(openRecord.date + 'T00:00:00');
+    const dateLabel = recordDateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    const endDisplay = `${endH.toString().padStart(2,'0')}:${endM.toString().padStart(2,'0')}`;
+
+    document.getElementById('forgotTimeoutInput').value = endDisplay;
+    document.getElementById('forgotTimeoutMessage').textContent =
+        `Hello! ${employeeName}, it looks like you forgot to log your Time Out on ${dateLabel}. Please submit your Time Out first.`;
+
+    const modal = document.getElementById('forgotTimeoutModal');
+    modal.dataset.recordId = openRecord.id;
+
+    document.getElementById('forgotTimeoutSkipBtn').onclick = () =>
+        bootstrap.Modal.getInstance(modal)?.hide();
+
+    const existing = bootstrap.Modal.getInstance(modal);
+    if (existing) existing.dispose();
+    new bootstrap.Modal(modal).show();
+    return true;
+}
+
+async function submitForgottenTimeout() {
+    const modal = document.getElementById('forgotTimeoutModal');
+    const recordId = parseInt(modal.dataset.recordId, 10);
+    const timeOut = document.getElementById('forgotTimeoutInput').value;
+
+    if (!timeOut) {
+        showNotification('Please set a time out.', 'warning');
+        return;
+    }
+
+    let attendanceData = loadAttendanceData();
+    const idx = attendanceData.findIndex(r => r.id === recordId);
+    if (idx === -1) {
+        bootstrap.Modal.getInstance(modal)?.hide();
+        return;
+    }
+
+    const record = attendanceData[idx];
+    const [inH, inM] = record.timeIn.split(':').map(Number);
+    const [outH, outM] = timeOut.split(':').map(Number);
+    let inTotal = inH * 60 + inM;
+    let outTotal = outH * 60 + outM;
+    if (outTotal < inTotal) outTotal += 24 * 60;
+    const totalHours = parseFloat(((outTotal - inTotal) / 60).toFixed(2));
+
+    attendanceData[idx].timeOut = timeOut;
+    attendanceData[idx].totalHours = totalHours;
+    // Auto-upgrade to Overtime if >= 10 hrs
+    if (totalHours >= 10 && (record.status === 'Present' || record.status === 'Late')) {
+        attendanceData[idx].status = 'Overtime';
+    }
+
+    saveAttendanceData(attendanceData);
+    bootstrap.Modal.getInstance(modal)?.hide();
+
+    updateDailyReport();
+    updateDashboard();
+    updateEmployeeDatalist();
+    await syncFullState();
+    await syncDashboardToSheets();
+    await syncWeeklyReportToSheets();
+
+    showNotification('Missed Time Out saved successfully!', 'success');
+}
+
 function addManualTimeoutButton() {
     // Time Out is a plain manual input, nothing to setup
 }
@@ -3150,87 +3191,6 @@ function submitEarlyOut() {
     showNotification('Emergency out recorded. Use Return when back to continue your shift.', 'info');
 }
 
-// Save the "Must Time Out" entry from modal
-function saveMustTimeout() {
-    const recId = document.getElementById('mustTimeoutRecordId').value;
-    const timeValRaw = document.getElementById('mustTimeoutTime').value;
-    // Only Time Out is required; reason/AMPM removed for this flow
-    const reason = '';
-    if (!recId) { showNotification('Record not found', 'warning'); return; }
-    if (!timeValRaw) { showNotification('Please enter a Time Out', 'warning'); return; }
-
-    // Time value as-is (expects 24-hour `HH:MM` from input)
-    const timeVal = timeValRaw;
-
-    let attendanceData = loadAttendanceData();
-    const idx = attendanceData.findIndex(r => r.id == recId);
-    if (idx === -1) { showNotification('Attendance record not found', 'warning'); bootstrap.Modal.getInstance(document.getElementById('mustTimeoutModal'))?.hide(); return; }
-
-    const record = attendanceData[idx];
-    // Compute total hours between timeIn and timeOut (simple fallback)
-    const inTime = record.timeIn || '';
-    let totalHours = 0;
-    if (inTime) {
-        const inM = toMinutesFromTime(inTime);
-        let outM = toMinutesFromTime(timeVal);
-        if (outM < inM) outM += 24 * 60;
-        totalHours = parseFloat(((outM - inM) / 60).toFixed(2));
-    }
-
-    // Update record
-    attendanceData[idx].timeOut = timeVal;
-    attendanceData[idx].totalHours = totalHours;
-    // No reason required in this forced Time Out flow
-    attendanceData[idx].earlyOut = false;
-
-    if (totalHours >= 10 && /present|late|undertime/i.test(attendanceData[idx].status || '')) {
-        attendanceData[idx].status = 'Overtime';
-    }
-
-    saveAttendanceData(attendanceData);
-    
-    // Close modal first
-    bootstrap.Modal.getInstance(document.getElementById('mustTimeoutModal'))?.hide();
-
-    // Reset the entire form so employee can log a fresh Time In
-    document.getElementById('attendanceForm').reset();
-    setDefaultDate();
-    const empNameInput = document.getElementById('employeeName');
-    if (empNameInput) {
-        empNameInput.removeAttribute('data-existing-record-id');
-        empNameInput.removeAttribute('data-early-out-record-id');
-    }
-    const toFieldReset = document.getElementById('timeOut');
-    if (toFieldReset) {
-        toFieldReset.disabled = true;
-        toFieldReset.style.backgroundColor = '#e9ecef';
-        toFieldReset.style.cursor = 'not-allowed';
-    }
-    const statusFieldReset = document.getElementById('attendanceStatus');
-    if (statusFieldReset) {
-        statusFieldReset.disabled = false;
-        statusFieldReset.style.backgroundColor = '';
-        statusFieldReset.style.cursor = '';
-    }
-    const submitBtn = document.querySelector('#attendanceForm button[type="submit"]');
-    if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.style.opacity = '1';
-    }
-    const mustTimeoutRecordIdInput = document.getElementById('mustTimeoutRecordId');
-    if (mustTimeoutRecordIdInput) mustTimeoutRecordIdInput.value = '';
-
-    // Update UI AFTER form reset
-    updateDailyReport();
-    updateDashboard();
-    updateEmployeeDatalist();
-    syncDashboardToSheets();
-    syncWeeklyReportToSheets();
-    syncFullState();
-
-    showNotification('Time Out saved. You may now log your next Time In.', 'success');
-}
-
 // Open Return to Work modal
 function openReturnToWorkModal() {
     const now = new Date();
@@ -3341,6 +3301,10 @@ function addEmployeeNameListener() {
         const attendanceData = loadAttendanceData();
         const today = getLocalISODate();
         const selectedDate = dateInput.value || today;
+
+        // Check for forgotten timeout from a previous shift before proceeding
+        if (selectedName && checkForgottenTimeout(selectedName)) return;
+
         // Check for resumed session (Return confirmed) awaiting final Time Out
         const resumedRecordId = employeeNameInput.getAttribute('data-existing-record-id');
         if (resumedRecordId) {
@@ -3446,27 +3410,6 @@ function addEmployeeNameListener() {
             if (earlyOutBtn) earlyOutBtn.style.display = 'inline-flex';
             if (returnWorkBtn) returnWorkBtn.style.display = 'none';
             if (returnSection) returnSection.style.display = 'none';
-            // Decide whether to show the forced Time Out modal now
-            const employees = JSON.parse(storage.getItem('employees') || '[]');
-            const selectedEmployee = employees.find(e => e.name === selectedName && e.department === currentDepartment);
-            const now = new Date();
-            const todayIso = getLocalISODate();
-            const isNextDay = todayIso > existingRecord.date;
-            const scheduleExpired = shouldForceMissingTimeoutPrompt(selectedEmployee, existingRecord.date, now);
-            const shouldPrompt = isNextDay || scheduleExpired;
-            if (shouldPrompt) {
-                const mustTimeoutRecordIdInput = document.getElementById('mustTimeoutRecordId');
-                const mustTimeoutMessage = document.getElementById('mustTimeoutMessage');
-                const mustTimeoutTime = document.getElementById('mustTimeoutTime');
-                if (mustTimeoutRecordIdInput) mustTimeoutRecordIdInput.value = existingRecord.id;
-                if (mustTimeoutMessage) mustTimeoutMessage.textContent = `Hello, ${existingRecord.name}! Please enter your Time Out for ${existingRecord.date}. After saving, proceed to log your next Time In when ready.`;
-                if (mustTimeoutTime) mustTimeoutTime.value = '';
-                new bootstrap.Modal(document.getElementById('mustTimeoutModal')).show();
-                if (submitBtn) {
-                    submitBtn.disabled = true;
-                    submitBtn.style.opacity = '0.6';
-                }
-            }
             return; // handled
         } else if (earlyOutRecord) {
             // RETURN TO WORK MODE — status locked, show Return button
