@@ -668,6 +668,11 @@ function saveScheduleOverride() {
 
     saveScheduleOverrides(overrides);
     bootstrap.Modal.getInstance(document.getElementById('scheduleOverrideModal'))?.hide();
+
+    // Refresh schedule display in the attendance form immediately
+    const currentDate = document.getElementById('attendanceDate')?.value;
+    if (name && currentDate) updateScheduleDisplay(name, currentDate);
+
     showNotification('One-day schedule override saved.', 'success');
 }
 
