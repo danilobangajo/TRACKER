@@ -3188,24 +3188,47 @@ function saveMustTimeout() {
     }
 
     saveAttendanceData(attendanceData);
-    updateDailyReport();
-    updateDashboard();
-    updateEmployeeDatalist();
-    syncDashboardToSheets();
-    syncWeeklyReportToSheets();
-
+    
+    // Close modal first
     bootstrap.Modal.getInstance(document.getElementById('mustTimeoutModal'))?.hide();
-    // Re-enable submit in case it was disabled when modal opened
+
+    // Reset the entire form so employee can log a fresh Time In
+    document.getElementById('attendanceForm').reset();
+    setDefaultDate();
+    const empNameInput = document.getElementById('employeeName');
+    if (empNameInput) {
+        empNameInput.removeAttribute('data-existing-record-id');
+        empNameInput.removeAttribute('data-early-out-record-id');
+    }
+    const toFieldReset = document.getElementById('timeOut');
+    if (toFieldReset) {
+        toFieldReset.disabled = true;
+        toFieldReset.style.backgroundColor = '#e9ecef';
+        toFieldReset.style.cursor = 'not-allowed';
+    }
+    const statusFieldReset = document.getElementById('attendanceStatus');
+    if (statusFieldReset) {
+        statusFieldReset.disabled = false;
+        statusFieldReset.style.backgroundColor = '';
+        statusFieldReset.style.cursor = '';
+    }
     const submitBtn = document.querySelector('#attendanceForm button[type="submit"]');
     if (submitBtn) {
         submitBtn.disabled = false;
         submitBtn.style.opacity = '1';
     }
-    // Clear hidden field
     const mustTimeoutRecordIdInput = document.getElementById('mustTimeoutRecordId');
     if (mustTimeoutRecordIdInput) mustTimeoutRecordIdInput.value = '';
 
-    showNotification('Time Out saved. You may now continue.', 'success');
+    // Update UI AFTER form reset
+    updateDailyReport();
+    updateDashboard();
+    updateEmployeeDatalist();
+    syncDashboardToSheets();
+    syncWeeklyReportToSheets();
+    syncFullState();
+
+    showNotification('Time Out saved. You may now log your next Time In.', 'success');
 }
 
 // Open Return to Work modal
