@@ -1540,28 +1540,54 @@ document.getElementById('attendanceForm').addEventListener('submit', async funct
 
     let attendanceData = loadAttendanceData();
 
-    // --- Overnight early-arrival correction ---
-    // If schedule starts at midnight or early morning (00:00–05:59) and the employee
-    // logs in late at night (20:00–23:59) on the form date, they are actually arriving
-    // early for the NEXT day's shift. Shift the record date forward by 1 day.
+    // --- Smart overnight date correction ---
+    // Uses the employee's effective schedule (override > special > regular) to determine
+    // the correct record date for midnight-type shifts.
     let recordDate = date;
     if (employee && status === 'Present' && timeIn && !existingRecordId) {
-        const checkSched = getScheduleForDate(employee, date);
-        const schedStartForCheck = checkSched?.start || employee.scheduleStart;
-        if (schedStartForCheck) {
-            const [schedH] = schedStartForCheck.split(':').map(Number);
-            const [timeH] = timeIn.split(':').map(Number);
-            // Schedule starts between midnight and 6 AM, and time-in is 8 PM or later
-            if (schedH >= 0 && schedH < 6 && timeH >= 20) {
-                const nextDay = new Date(date + 'T00:00:00');
-                nextDay.setDate(nextDay.getDate() + 1);
-                const y = nextDay.getFullYear();
-                const mo = String(nextDay.getMonth() + 1).padStart(2, '0');
-                const dy = String(nextDay.getDate()).padStart(2, '0');
-                recordDate = `${y}-${mo}-${dy}`;
-                // Also update the form date input so subsequent logic uses the correct date
-                document.getElementById('attendanceDate').value = recordDate;
-            }
+        const [timeH, timeM] = timeIn.split(':').map(Number);
+        const timeInMins = timeH * 60 + timeM;
+
+        // Helper: get date string offset by N days
+        const offsetDate = (d, n) => {
+            const obj = new Date(d + 'T00:00:00');
+            obj.setDate(obj.getDate() + n);
+            return obj.toISOString().split('T')[0];
+        };
+
+        const prevDate = offsetDate(date, -1);
+        const nextDate = offsetDate(date, 1);
+
+        // Get effective schedule for selected date, prev day, and next day
+        const schedSelected = getScheduleForDate(employee, date);
+        const schedPrev     = getScheduleForDate(employee, prevDate);
+        const schedNext     = getScheduleForDate(employee, nextDate);
+
+        const isMidnight = (s) => {
+            if (!s?.start) return false;
+            const h = parseInt(s.start.split(':')[0], 10);
+            return h < 6 || h >= 20; // 8PM–5:59AM = midnight-type
+        };
+
+        const hasRecord = (d) => attendanceData.some(r =>
+            r.name === name && r.date === d && r.department === currentDepartment
+        );
+
+        if (isMidnight(schedSelected)) {
+            // Selected date itself is a midnight shift — no correction needed
+            recordDate = date;
+        } else if (timeInMins >= 20 * 60 && isMidnight(schedNext) && !hasRecord(nextDate)) {
+            // Time-in is late night (8PM+), next day has midnight shift and no record yet
+            // → employee is arriving early for next day's shift
+            recordDate = nextDate;
+        } else if (timeInMins < 12 * 60 && isMidnight(schedPrev) && !hasRecord(prevDate)) {
+            // Time-in is early morning (before noon), prev day has midnight shift and no record yet
+            // → employee is late for previous day's shift
+            recordDate = prevDate;
+        }
+
+        if (recordDate !== date) {
+            document.getElementById('attendanceDate').value = recordDate;
         }
     }
 
@@ -1746,6 +1772,8 @@ document.getElementById('attendanceForm').addEventListener('submit', async funct
     // Hide schedule display on reset
     const schedRowReset = document.getElementById('scheduleDisplayRow');
     if (schedRowReset) schedRowReset.style.display = 'none';
+    // Clear inline open-record alert
+    showOpenRecordAlert(null);
     // Re-lock timeout, unlock status
     const toField = document.getElementById('timeOut');
     toField.disabled = true;
@@ -2928,164 +2956,18 @@ function updateWeeklyReportWithDateFilter(selectedDate) {
     `}).join('');
 }
 
-// Check if the named employee has a forgotten (overdue) timeout record.
-// Returns true if the modal was shown.
-// Correctly handles overnight shifts (e.g. 21:00–06:00, 23:00–09:00, 00:00–10:00)
-// and skips Flex/Float employees who have no fixed end time.
-function checkForgottenTimeout(employeeName) {
-    if (!employeeName) return false;
-
-    const attendanceData = loadAttendanceData();
-    const employees = JSON.parse(storage.getItem('employees') || '[]');
-    const employee = employees.find(e => e.name === employeeName && e.department === currentDepartment);
-    if (!employee) return false;
-
-    // Skip Flex and Float — no fixed end time to enforce
-    const notes = (employee.scheduleNotes || '').toUpperCase();
-    if (notes.includes('FLEX') || notes.includes('FLOAT')) return false;
-
-    // Find the most recent open record (has timeIn, no timeOut, not an earlyOut)
-    const openRecord = attendanceData
-        .filter(r =>
-            r.name === employeeName &&
-            r.department === currentDepartment &&
-            r.timeIn &&
-            !r.timeOut &&
-            !r.earlyOut
-        )
-        .sort((a, b) => b.id - a.id)[0]; // most recent
-
-    if (!openRecord) return false;
-
-    // Get the schedule for the record's date.
-    // For overnight shifts, the record is saved on the NEXT day (e.g. time-in 11PM on date 16
-    // gets saved as date 17). The one-day override however is set on date 16 (the shift date).
-    // Detect overnight: timeIn >= 20:00 and record date differs from the shift date.
-    const timeInH = openRecord.timeIn ? parseInt(openRecord.timeIn.split(':')[0], 10) : -1;
-    const isOvernightRecord = timeInH >= 20;
-
-    // ALWAYS check for override on the record date first (highest priority)
-    let sched = getScheduleForDate(employee, openRecord.date);
-
-    // If no override found on record date AND it's an overnight record, check previous date
-    if (isOvernightRecord && sched.source !== 'override-shift' && sched.source !== 'override-broken') {
-        const prevDateObj = new Date(openRecord.date + 'T00:00:00');
-        prevDateObj.setDate(prevDateObj.getDate() - 1);
-        const prevDateStr = prevDateObj.toISOString().split('T')[0];
-        const prevSched = getScheduleForDate(employee, prevDateStr);
-        // Use prev date schedule if it's an override OR if the regular schedule starts early morning (overnight shift)
-        const prevSchedStartH = prevSched?.start ? parseInt(prevSched.start.split(':')[0], 10) : -1;
-        if (prevSched.source === 'override-shift' || prevSched.source === 'override-broken' ||
-            (prevSchedStartH >= 0 && prevSchedStartH < 6)) {
-            sched = prevSched;
-        }
+// Show or hide the inline open-record warning banner inside the attendance form.
+function showOpenRecordAlert(message) {
+    const alert = document.getElementById('openRecordAlert');
+    const text = document.getElementById('openRecordAlertText');
+    if (!alert || !text) return;
+    if (message) {
+        text.textContent = message;
+        alert.classList.remove('d-none');
+    } else {
+        alert.classList.add('d-none');
+        text.textContent = '';
     }
-
-    const schedStart = sched?.start || employee.scheduleStart;
-    const schedEnd = sched?.end || employee.scheduleEnd;
-    if (!schedStart || !schedEnd) return false;
-
-    const [startH, startM] = schedStart.split(':').map(Number);
-    const [endH, endM] = schedEnd.split(':').map(Number);
-
-    // Build the expected shift-end as an absolute Date object.
-    // Base date = the record's date. If end < start (overnight), end is the NEXT calendar day.
-    const recordDateBase = new Date(openRecord.date + 'T00:00:00');
-    const shiftEndDate = new Date(recordDateBase);
-    shiftEndDate.setHours(endH, endM, 0, 0);
-    const isOvernight = (endH * 60 + endM) < (startH * 60 + startM);
-    if (isOvernight) shiftEndDate.setDate(shiftEndDate.getDate() + 1);
-
-    // If employee has OT in schedule notes, extend shift end by 1 hour
-    // BUT skip OT extension if a one-day override is active (override end is already the final time)
-    const hasOverride = sched?.source === 'override-shift' || sched?.source === 'override-broken';
-    if (!hasOverride && (notes.includes('1HR OT') || notes.includes('1 HR OT'))) {
-        shiftEndDate.setTime(shiftEndDate.getTime() + 60 * 60 * 1000);
-    }
-
-    // Add a 1-hour grace buffer so we don't nag them mid-shift
-    const gracePeriodMs = 60 * 60 * 1000;
-    const overdueThreshold = new Date(shiftEndDate.getTime() + gracePeriodMs);
-
-    const now = new Date();
-    if (now <= overdueThreshold) return false; // still within shift window + grace
-
-    // It's overdue — show the modal.
-    // For overnight shifts with override from previous date, use the override date (shift date)
-    // instead of the record date for the modal message.
-    let displayDate = openRecord.date;
-    if (sched.source === 'override-shift' || sched.source === 'override-broken') {
-        // Check if override is from previous date (overnight case)
-        const prevDateObj = new Date(openRecord.date + 'T00:00:00');
-        prevDateObj.setDate(prevDateObj.getDate() - 1);
-        const prevDateStr = prevDateObj.toISOString().split('T')[0];
-        const checkOverride = getScheduleOverrideForDate(employeeName, prevDateStr, currentDepartment);
-        if (checkOverride) displayDate = prevDateStr;
-    }
-
-    const recordDateObj = new Date(displayDate + 'T00:00:00');
-    const dateLabel = recordDateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-    const endDisplay = `${endH.toString().padStart(2,'0')}:${endM.toString().padStart(2,'0')}`;
-
-    document.getElementById('forgotTimeoutInput').value = endDisplay;
-    document.getElementById('forgotTimeoutMessage').textContent =
-        `Hello! ${employeeName}, it looks like you forgot to log your Time Out on ${dateLabel}. Please submit your Time Out first.`;
-
-    const modal = document.getElementById('forgotTimeoutModal');
-    modal.dataset.recordId = openRecord.id;
-
-    document.getElementById('forgotTimeoutSkipBtn').onclick = () =>
-        bootstrap.Modal.getInstance(modal)?.hide();
-
-    const existing = bootstrap.Modal.getInstance(modal);
-    if (existing) existing.dispose();
-    new bootstrap.Modal(modal).show();
-    return true;
-}
-
-async function submitForgottenTimeout() {
-    const modal = document.getElementById('forgotTimeoutModal');
-    const recordId = parseInt(modal.dataset.recordId, 10);
-    const timeOut = document.getElementById('forgotTimeoutInput').value;
-
-    if (!timeOut) {
-        showNotification('Please set a time out.', 'warning');
-        return;
-    }
-
-    let attendanceData = loadAttendanceData();
-    const idx = attendanceData.findIndex(r => r.id === recordId);
-    if (idx === -1) {
-        bootstrap.Modal.getInstance(modal)?.hide();
-        return;
-    }
-
-    const record = attendanceData[idx];
-    const [inH, inM] = record.timeIn.split(':').map(Number);
-    const [outH, outM] = timeOut.split(':').map(Number);
-    let inTotal = inH * 60 + inM;
-    let outTotal = outH * 60 + outM;
-    if (outTotal < inTotal) outTotal += 24 * 60;
-    const totalHours = parseFloat(((outTotal - inTotal) / 60).toFixed(2));
-
-    attendanceData[idx].timeOut = timeOut;
-    attendanceData[idx].totalHours = totalHours;
-    // Auto-upgrade to Overtime if >= 10 hrs
-    if (totalHours >= 10 && (record.status === 'Present' || record.status === 'Late')) {
-        attendanceData[idx].status = 'Overtime';
-    }
-
-    saveAttendanceData(attendanceData);
-    bootstrap.Modal.getInstance(modal)?.hide();
-
-    updateDailyReport();
-    updateDashboard();
-    updateEmployeeDatalist();
-    await syncFullState();
-    await syncDashboardToSheets();
-    await syncWeeklyReportToSheets();
-
-    showNotification('Missed Time Out saved successfully!', 'success');
 }
 
 function addManualTimeoutButton() {
@@ -3416,9 +3298,6 @@ function addEmployeeNameListener() {
         const today = getLocalISODate();
         const selectedDate = dateInput.value || today;
 
-        // Check for forgotten timeout from a previous shift before proceeding
-        if (selectedName && checkForgottenTimeout(selectedName)) return;
-
         // Update schedule display badge
         updateScheduleDisplay(selectedName, selectedDate);
 
@@ -3519,11 +3398,35 @@ function addEmployeeNameListener() {
             submitBtn.style.opacity = '1';
             employeeNameInput.setAttribute('data-existing-record-id', existingRecord.id);
             employeeNameInput.removeAttribute('data-early-out-record-id');
-            // For overnight shifts: sync the date input to the record's actual date
-            // so the form submit updates the correct record
-            if (existingRecord.date !== selectedDate) {
-                dateInput.value = existingRecord.date;
+            // Show inline warning if employee forgot to time out (10hrs past schedule end + grace)
+            const empForCheck = employees.find(e => e.name === selectedName && e.department === currentDepartment);
+            const schedForCheck = empForCheck ? getScheduleForDate(empForCheck, existingRecord.date) : null;
+            const schedEndStr = schedForCheck?.end || empForCheck?.scheduleEnd;
+            const empNotes = (empForCheck?.scheduleNotes || '').toUpperCase();
+            const graceHours = (empNotes.includes('1HR OT') || empNotes.includes('1 HR OT')) ? 2 : 1;
+            if (schedEndStr) {
+                const [endH, endM] = schedEndStr.split(':').map(Number);
+                const [inH, inM] = existingRecord.timeIn.split(':').map(Number);
+                // Build absolute shift-end Date based on record date
+                const recBase = new Date(existingRecord.date + 'T00:00:00');
+                const shiftEnd = new Date(recBase);
+                shiftEnd.setHours(endH, endM, 0, 0);
+                // Overnight: if end < timeIn (in minutes), shift end is next day
+                if ((endH * 60 + endM) < (inH * 60 + inM)) shiftEnd.setDate(shiftEnd.getDate() + 1);
+                // Add grace + 10hrs to get the banner threshold
+                const threshold = new Date(shiftEnd.getTime() + (graceHours + 10) * 60 * 60 * 1000);
+                if (new Date() >= threshold) {
+                    const d = new Date(existingRecord.date + 'T00:00:00');
+                    const label = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+                    showOpenRecordAlert(`You have an open Time In from ${label}. Please submit your Time Out.`);
+                } else {
+                    showOpenRecordAlert(null);
+                }
+            } else {
+                showOpenRecordAlert(null);
             }
+            // For overnight shifts: sync the date input to the record's actual date
+            if (existingRecord.date !== selectedDate) dateInput.value = existingRecord.date;
             if (earlyOutBtn) earlyOutBtn.style.display = 'inline-flex';
             if (returnWorkBtn) returnWorkBtn.style.display = 'none';
             if (returnSection) returnSection.style.display = 'none';
@@ -3548,6 +3451,7 @@ function addEmployeeNameListener() {
             if (earlyOutBtn) earlyOutBtn.style.display = 'none';
             if (returnWorkBtn) returnWorkBtn.style.display = 'inline-flex';
             if (returnSection) returnSection.style.display = 'none';
+            showOpenRecordAlert(null);
             return; // handled
         } else {
             // TIME IN MODE — status editable, timeout disabled, submit disabled
@@ -3573,6 +3477,7 @@ function addEmployeeNameListener() {
             if (earlyOutBtn) earlyOutBtn.style.display = 'inline-flex';
             if (returnWorkBtn) returnWorkBtn.style.display = 'none';
             if (returnSection) returnSection.style.display = 'none';
+            showOpenRecordAlert(null);
         }
     }
 
@@ -3593,6 +3498,8 @@ function addEmployeeNameListener() {
         // Hide schedule display while typing
         const schedRow = document.getElementById('scheduleDisplayRow');
         if (schedRow) schedRow.style.display = 'none';
+        // Hide open-record alert while typing
+        showOpenRecordAlert(null);
 
         // Reset fields to neutral typing state
         if (timeInInput) {
