@@ -1022,6 +1022,65 @@ td.policy-color-13 {
     color: white;
 }
 
+/* Timezone globe button — colored icon */
+#timezoneBtn {
+    background: transparent;
+    border: none;
+    color: #0ea5e9;
+    padding: 0.3rem 0.4rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+#timezoneBtn i {
+    font-size: 1.05rem;
+    color: #0ea5e9;
+}
+#timezoneBtn:hover {
+    background: rgba(14,165,233,0.1);
+    color: #0284c7;
+    transform: translateY(-1px);
+}
+#timezoneBtn:hover i {
+    color: #0284c7;
+}
+
+/* Date picker calendar icon — colored */
+#attendanceDate {
+    color-scheme: light;
+}
+#attendanceDate::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    filter: invert(42%) sepia(93%) saturate(400%) hue-rotate(200deg) brightness(95%) contrast(90%);
+    opacity: 1;
+    width: 16px;
+    height: 16px;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+}
+#attendanceDate::-webkit-calendar-picker-indicator:hover {
+    transform: scale(1.2);
+    opacity: 0.85;
+}
+
+/* Time picker clock icon — colored (timeOut) */
+#timeOut {
+    color-scheme: light;
+}
+#timeOut::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    filter: invert(35%) sepia(80%) saturate(500%) hue-rotate(130deg) brightness(90%) contrast(90%);
+    opacity: 1;
+    width: 16px;
+    height: 16px;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+}
+#timeOut::-webkit-calendar-picker-indicator:hover {
+    transform: scale(1.2);
+    opacity: 0.85;
+}
+
 /* Admin Toggle Button */
 #adminToggleBtn {
     background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
@@ -1068,61 +1127,53 @@ td.policy-color-13 {
     transition: all 0.3s ease;
 }
 
-/* Emergency button style */
+/* Emergency button — transparent background, colored icon only */
 .btn-emergency {
-    --btn-bg-start: #ef4444;
-    --btn-bg-end: #dc2626;
-    background: linear-gradient(180deg, var(--btn-bg-start), var(--btn-bg-end));
-    color: #fff;
+    background: transparent;
     border: none;
-    box-shadow: 0 6px 18px rgba(220, 38, 38, 0.18);
-    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    color: #ef4444;
+    box-shadow: none;
+    transition: transform 0.12s ease, color 0.12s ease;
+    padding: 0;
 }
 .btn-emergency:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 26px rgba(220, 38, 38, 0.22);
+    color: #dc2626;
+    background: transparent;
 }
 .btn-emergency:active {
     transform: translateY(0);
 }
-.btn-emergency i { font-size: 0.95rem; }
+.btn-emergency i { font-size: 1.15rem; }
 
-/* Small variation for emergency button when used with .btn-sm */
-.btn-emergency.btn-sm {
-    padding: 0.28rem 0.5rem;
-    font-size: 0.78rem;
-    border-radius: 8px;
-    min-width: 44px;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-}
-
-.btn-emergency.btn-sm i { font-size: 0.85rem; }
-
-/* Icon-only emergency button (circular) */
+/* Icon-only emergency button */
 .btn-emergency.icon-only {
-    width: 40px;
-    height: 40px;
+    width: 34px;
+    height: 34px;
     padding: 0;
-    border-radius: 50%;
+    border-radius: 8px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 6px 18px rgba(220, 38, 38, 0.18);
+    background: transparent;
+    border: none;
+    box-shadow: none;
 }
 .btn-emergency.icon-only i {
-    font-size: 1.05rem;
+    font-size: 1.15rem;
+    color: #ef4444;
 }
 .btn-emergency.icon-only:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 26px rgba(220, 38, 38, 0.24);
+    background: rgba(239,68,68,0.08);
+    transform: translateY(-1px);
+}
+.btn-emergency.icon-only:hover i {
+    color: #dc2626;
 }
 
-/* Slightly smaller on compact/small screens */
 @media (max-width: 480px) {
-    .btn-emergency.icon-only { width: 36px; height: 36px; }
-    .btn-emergency.icon-only i { font-size: 0.95rem; }
+    .btn-emergency.icon-only { width: 30px; height: 30px; }
+    .btn-emergency.icon-only i { font-size: 1rem; }
 }
 
 .btn-white:hover {
@@ -1246,10 +1297,91 @@ td.policy-color-13 {
     color: var(--danger-color) !important;
 }
 
+/* User Manual button — colored gradient */
+.btn-user-manual {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    border: none;
+    color: #fff;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 8px rgba(99,102,241,0.35);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+.btn-user-manual i {
+    font-size: 0.85rem;
+    color: #fff;
+}
+.btn-user-manual:hover {
+    background: linear-gradient(135deg, #4f46e5, #4338ca);
+    transform: translateY(-1px);
+    box-shadow: 0 5px 14px rgba(99,102,241,0.45);
+    color: #fff;
+}
+
 /* Schedule Note toggle buttons */
 .sn-btn { border: 1.5px solid #cbd5e1; color: #475569; background: #f8fafc; }
 .sn-btn.active { background: #6366f1; border-color: #6366f1; color: #fff; }
 .sn-btn:hover:not(.active) { background: #e2e8f0; border-color: #94a3b8; }
+
+/* ===== User Manual Card Styles ===== */
+.um-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    background: #fff;
+    border-radius: 14px;
+    padding: 0.9rem 1rem;
+    margin-bottom: 0.75rem;
+    border-left: 4px solid #6366f1;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: box-shadow 0.2s ease;
+}
+.um-card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+}
+.um-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #fff;
+    font-size: 1rem;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+}
+.um-content {
+    flex: 1;
+    min-width: 0;
+}
+.um-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #1e293b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.4rem;
+}
+.um-list {
+    margin: 0;
+    padding-left: 1.1rem;
+    font-size: 0.82rem;
+    color: #475569;
+    line-height: 1.6;
+}
+.um-list li {
+    margin-bottom: 0.2rem;
+}
+.um-list li:last-child {
+    margin-bottom: 0;
+}
 
 /* Schedule Display Card */
 .schedule-display-card {
