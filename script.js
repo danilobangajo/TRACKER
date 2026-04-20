@@ -774,6 +774,7 @@ function switchDepartment(dept) {
     const body = document.body;
     
     const dot = document.getElementById('deptDot');
+    const formSubtitle = document.getElementById('formCardSubtitle');
     if (dept === 'rv') {
         rvTab.classList.add('active');
         rvTab.classList.remove('btn-outline-primary');
@@ -789,6 +790,7 @@ function switchDepartment(dept) {
         body.classList.add('rv-bg');
         dot.classList.remove('text-danger');
         dot.classList.add('text-success');
+        if (formSubtitle) formSubtitle.textContent = 'Red Victory Consumers Goods Trading';
     } else {
         comsTab.classList.add('active');
         comsTab.classList.remove('btn-outline-primary');
@@ -804,6 +806,7 @@ function switchDepartment(dept) {
         body.classList.add('coms-bg');
         dot.classList.remove('text-success');
         dot.classList.add('text-danger');
+        if (formSubtitle) formSubtitle.textContent = 'C. Operations Management Services';
     }
     
     // Clear attendance form on department switch
@@ -3576,8 +3579,10 @@ function toggleAdminView() {
 
 function verifyAdminPassword() {
     const input = document.getElementById('adminPasswordInput');
+    const errorEl = document.getElementById('adminPasswordError');
     if (input.value === 'COMSADMIN2026!') {
         input.value = '';
+        errorEl.classList.add('d-none');
         document.activeElement?.blur();
         const modalEl = document.getElementById('adminPasswordModal');
         modalEl.addEventListener('hidden.bs.modal', function handler() {
@@ -3586,7 +3591,7 @@ function verifyAdminPassword() {
         });
         bootstrap.Modal.getInstance(modalEl).hide();
     } else {
-        document.getElementById('adminPasswordError').style.display = 'block';
+        errorEl.classList.remove('d-none');
         input.value = '';
         input.focus();
     }

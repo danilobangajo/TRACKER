@@ -881,16 +881,18 @@ td.policy-color-13 {
 
 /* Department Tabs */
 .btn-group .btn {
-    padding: 0.6rem 1.8rem;
-    font-weight: 700;
+    padding: 0.75rem 2.5rem;
+    font-weight: 800;
     transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-    font-size: 0.85rem;
-    letter-spacing: 1.5px;
+    font-size: 0.95rem;
+    letter-spacing: 2px;
     text-transform: uppercase;
     border: none;
-    margin: 0 3px;
+    margin: 0 4px;
     position: relative;
     overflow: hidden;
+    height: 48px;
+    min-width: 100px;
 }
 
 .btn-group .btn::before {
@@ -907,58 +909,58 @@ td.policy-color-13 {
 }
 
 #rvTab {
-    background: rgba(255,255,255,0.18);
+    background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
     color: white;
     border-radius: 14px;
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    border: 1.5px solid rgba(255,255,255,0.35);
-    box-shadow: 0 2px 12px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.3);
+    border: 1.5px solid rgba(255,255,255,0.3);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.2);
     text-shadow: 0 1px 2px rgba(0,0,0,0.15);
 }
 
 #rvTab:hover {
-    background: rgba(255,255,255,0.28);
+    background: linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.12));
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.4);
-    border-color: rgba(255,255,255,0.55);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.3);
+    border-color: rgba(255,255,255,0.5);
 }
 
 #rvTab.active {
-    background: linear-gradient(135deg, #ffffff 0%, #e2faf0 100%) !important;
-    color: #065f46 !important;
-    border-color: rgba(255,255,255,0.9) !important;
-    box-shadow: 0 6px 24px rgba(0,0,0,0.18), 0 0 0 3px rgba(255,255,255,0.25), inset 0 1px 0 rgba(255,255,255,1) !important;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    color: #fff !important;
+    border-color: rgba(255,255,255,0.4) !important;
+    box-shadow: 0 6px 20px rgba(16,185,129,0.5), 0 0 0 3px rgba(16,185,129,0.2), inset 0 1px 0 rgba(255,255,255,0.25) !important;
     transform: translateY(-3px);
-    text-shadow: none;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.2);
     border-radius: 14px;
 }
 
 #comsTab {
-    background: rgba(255,255,255,0.18);
+    background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
     color: white;
     border-radius: 14px;
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    border: 1.5px solid rgba(255,255,255,0.35);
-    box-shadow: 0 2px 12px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.3);
+    border: 1.5px solid rgba(255,255,255,0.3);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.2);
     text-shadow: 0 1px 2px rgba(0,0,0,0.15);
 }
 
 #comsTab:hover {
-    background: rgba(255,255,255,0.28);
+    background: linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.12));
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.4);
-    border-color: rgba(255,255,255,0.55);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.3);
+    border-color: rgba(255,255,255,0.5);
 }
 
 #comsTab.active {
-    background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%) !important;
-    color: #991b1b !important;
-    border-color: rgba(255,255,255,0.9) !important;
-    box-shadow: 0 6px 24px rgba(0,0,0,0.18), 0 0 0 3px rgba(255,255,255,0.25), inset 0 1px 0 rgba(255,255,255,1) !important;
+    background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%) !important;
+    color: #fff !important;
+    border-color: rgba(255,255,255,0.4) !important;
+    box-shadow: 0 6px 20px rgba(244,63,94,0.5), 0 0 0 3px rgba(244,63,94,0.2), inset 0 1px 0 rgba(255,255,255,0.25) !important;
     transform: translateY(-3px);
-    text-shadow: none;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.2);
     border-radius: 14px;
 }
 
@@ -1083,15 +1085,15 @@ td.policy-color-13 {
 
 /* Admin Toggle Button */
 #adminToggleBtn {
-    background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
-    color: #374151;
-    border: 1.5px solid rgba(255,255,255,0.8);
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: #fff;
+    border: 1.5px solid rgba(255,255,255,0.3);
     border-radius: 20px;
     padding: 0.45rem 1.1rem;
     font-weight: 700;
     font-size: 0.8rem;
     letter-spacing: 0.3px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.9);
+    box-shadow: 0 4px 12px rgba(139,92,246,0.45), inset 0 1px 0 rgba(255,255,255,0.2);
     transition: all 0.3s ease;
     display: inline-flex;
     align-items: center;
@@ -1101,20 +1103,21 @@ td.policy-color-13 {
 
 #adminToggleBtn:hover {
     transform: translateY(-2px);
-    background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
-    color: #1e293b;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.20), inset 0 1px 0 rgba(255,255,255,1);
+    background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+    color: #fff;
+    box-shadow: 0 6px 18px rgba(139,92,246,0.55), inset 0 1px 0 rgba(255,255,255,0.25);
 }
 
 #adminToggleBtn.btn-secondary {
-    background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
-    color: #1e293b;
-    border-color: rgba(255,255,255,0.9);
-    box-shadow: 0 4px 14px rgba(0,0,0,0.18), 0 0 0 3px rgba(255,255,255,0.3), inset 0 1px 0 rgba(255,255,255,1);
+    background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+    color: #fff;
+    border-color: rgba(255,255,255,0.3);
+    box-shadow: 0 4px 14px rgba(236,72,153,0.45), 0 0 0 3px rgba(255,255,255,0.2), inset 0 1px 0 rgba(255,255,255,0.15);
 }
 
 #adminToggleBtn.btn-secondary:hover {
-    box-shadow: 0 6px 20px rgba(0,0,0,0.22), 0 0 0 4px rgba(255,255,255,0.35), inset 0 1px 0 rgba(255,255,255,1);
+    background: linear-gradient(135deg, #f472b6 0%, #ec4899 100%);
+    box-shadow: 0 6px 20px rgba(236,72,153,0.55), 0 0 0 4px rgba(255,255,255,0.25), inset 0 1px 0 rgba(255,255,255,0.2);
 }
 
 /* Daily Report Button */
