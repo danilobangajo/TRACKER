@@ -3571,16 +3571,35 @@ function toggleAdminView() {
     if (isOpen) {
         closeAdminPanel();
     } else {
-        document.getElementById('adminPasswordInput').value = '';
-        document.getElementById('adminPasswordError').style.display = 'none';
+        const pwInput = document.getElementById('adminPasswordInput');
+        const pwError = document.getElementById('adminPasswordError');
+        // Reset lockout UI if lock has expired
+        if (Date.now() >= _adminLockUntil) {
+            pwInput.disabled = false;
+            const enterBtn = document.querySelector('#adminPasswordModal .modal-footer button:last-child');
+            if (enterBtn) enterBtn.disabled = false;
+        }
+        pwInput.value = '';
+        pwError.classList.add('d-none');
         new bootstrap.Modal(document.getElementById('adminPasswordModal')).show();
     }
 }
 
+let _adminAttempts = 0;
+let _adminLockUntil = 0;
+let _adminLockTimer = null;
+
 function verifyAdminPassword() {
     const input = document.getElementById('adminPasswordInput');
     const errorEl = document.getElementById('adminPasswordError');
+    const enterBtn = document.querySelector('#adminPasswordModal .modal-footer button:last-child');
+
+    // Check if still locked
+    if (Date.now() < _adminLockUntil) return;
+
     if (input.value === 'COMSADMIN2026!') {
+        _adminAttempts = 0;
+        _adminLockUntil = 0;
         input.value = '';
         errorEl.classList.add('d-none');
         document.activeElement?.blur();
@@ -3591,9 +3610,41 @@ function verifyAdminPassword() {
         });
         bootstrap.Modal.getInstance(modalEl).hide();
     } else {
-        errorEl.classList.remove('d-none');
+        _adminAttempts++;
         input.value = '';
-        input.focus();
+
+        if (_adminAttempts >= 5) {
+            _adminLockUntil = Date.now() + 60000;
+            _adminAttempts = 0;
+            input.disabled = true;
+            if (enterBtn) enterBtn.disabled = true;
+            errorEl.classList.remove('d-none');
+
+            let remaining = 60;
+            const updateMsg = () => {
+                errorEl.innerHTML = `<i class="bi bi-lock-fill"></i> Too many attempts. Try again in <strong>${remaining}s</strong>.`;
+            };
+            updateMsg();
+
+            _adminLockTimer = setInterval(() => {
+                remaining--;
+                if (remaining <= 0) {
+                    clearInterval(_adminLockTimer);
+                    input.disabled = false;
+                    if (enterBtn) enterBtn.disabled = false;
+                    errorEl.classList.add('d-none');
+                    errorEl.innerHTML = '<i class="bi bi-exclamation-circle-fill"></i> Incorrect password. Please try again.';
+                    input.focus();
+                } else {
+                    updateMsg();
+                }
+            }, 1000);
+        } else {
+            const left = 5 - _adminAttempts;
+            errorEl.classList.remove('d-none');
+            errorEl.innerHTML = `<i class="bi bi-exclamation-circle-fill"></i> Incorrect password. ${left} attempt${left !== 1 ? 's' : ''} left.`;
+            input.focus();
+        }
     }
 }
 

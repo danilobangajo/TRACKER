@@ -435,7 +435,7 @@
                     <button type="button" class="btn btn-sm"
                         style="flex:1;border-radius:10px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#64748b;font-weight:600;font-size:0.8rem;height:38px;"
                         data-bs-dismiss="modal"
-                        onclick="document.getElementById('adminPasswordInput').value='';document.getElementById('adminPasswordError').classList.add('d-none');">
+                        onclick="document.getElementById('adminPasswordInput').value='';document.getElementById('adminPasswordError').classList.add('d-none');document.getElementById('adminPasswordError').innerHTML='<i class=\'bi bi-exclamation-circle-fill\'></i> Incorrect password. Please try again.';">
                         Cancel
                     </button>
                     <button type="button" class="btn btn-sm"
@@ -787,25 +787,59 @@
 
     <!-- Early Out Modal -->
     <div class="modal fade" id="earlyOutModal" tabindex="-1" aria-labelledby="earlyOutModalLabel">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="earlyOutModalLabel"><i class="bi bi-exclamation-octagon-fill me-2"></i>Emergency Out</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Time Out</label>
-                        <input type="time" class="form-control" id="earlyOutTime" aria-label="Emergency Out Time">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border:none;border-radius:24px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,0.22);">
+                <!-- Header -->
+                <div style="background:linear-gradient(135deg,#ef4444 0%,#dc2626 60%,#b91c1c 100%);padding:1.6rem 1.5rem 1.2rem;position:relative;overflow:hidden;">
+                    <div style="position:absolute;top:-18px;right:-18px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,0.07);"></div>
+                    <div style="position:absolute;bottom:-30px;left:-20px;width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,0.05);"></div>
+                    <div class="d-flex align-items-center gap-3" style="position:relative;z-index:1;">
+                        <div style="width:52px;height:52px;border-radius:16px;background:rgba(255,255,255,0.18);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,0.15);flex-shrink:0;">
+                            <i class="bi bi-exclamation-octagon-fill" style="font-size:1.5rem;color:#fff;"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0" id="earlyOutModalLabel" style="color:#fff;font-weight:800;font-size:1rem;letter-spacing:0.2px;">Emergency Out</h5>
+                            <div style="color:rgba(255,255,255,0.78);font-size:0.72rem;margin-top:0.15rem;">Log your early departure from shift</div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="earlyOutReason" class="form-label">Reason</label>
-                        <textarea class="form-control" id="earlyOutReason" rows="3" placeholder="e.g. important errand, medical appointment, family emergency..."></textarea>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="position:absolute;top:1rem;right:1rem;opacity:0.8;"></button>
+                </div>
+                <!-- Body -->
+                <div class="modal-body" style="background:#fff;padding:1.5rem;">
+                    <!-- Alert banner -->
+                    <div style="background:linear-gradient(135deg,#fff1f2,#ffe4e6);border:1px solid #fecaca;border-radius:12px;padding:0.75rem 1rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:0.6rem;">
+                        <i class="bi bi-shield-exclamation" style="color:#ef4444;font-size:1rem;flex-shrink:0;"></i>
+                        <span style="font-size:0.78rem;color:#991b1b;font-weight:500;">This will mark you as <strong>Undertime</strong>. Use Return to resume your shift.</span>
+                    </div>
+                    <!-- Time Out field -->
+                    <div class="mb-4">
+                        <label class="form-label" style="font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Time Out</label>
+                        <div style="position:relative;">
+                            <i class="bi bi-clock-fill" style="position:absolute;left:0.85rem;top:50%;transform:translateY(-50%);color:#ef4444;font-size:0.9rem;pointer-events:none;"></i>
+                            <input type="time" class="form-control" id="earlyOutTime" aria-label="Emergency Out Time"
+                                style="padding-left:2.4rem;border-radius:12px;border:1.5px solid #e2e8f0;font-size:0.95rem;height:46px;font-weight:600;color:#1e293b;transition:border-color 0.2s;">
+                        </div>
+                    </div>
+                    <!-- Reason field -->
+                    <div class="mb-1">
+                        <label for="earlyOutReason" class="form-label" style="font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Reason <span style="color:#94a3b8;font-weight:400;text-transform:none;">(optional)</span></label>
+                        <textarea class="form-control" id="earlyOutReason" rows="3"
+                            placeholder="e.g. medical appointment, family emergency, important errand..."
+                            style="border-radius:12px;border:1.5px solid #e2e8f0;font-size:0.85rem;resize:none;padding:0.75rem 1rem;color:#334155;"></textarea>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-danger" onclick="submitEarlyOut()"><i class="bi bi-check-circle me-1"></i>Confirm Emergency Out</button>
+                <!-- Footer -->
+                <div style="background:#f8fafc;padding:1rem 1.5rem 1.4rem;border:none;display:flex;gap:0.6rem;">
+                    <button type="button" class="btn btn-sm"
+                        data-bs-dismiss="modal"
+                        style="flex:1;border-radius:12px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-weight:600;font-size:0.85rem;height:42px;">
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-sm"
+                        onclick="submitEarlyOut()"
+                        style="flex:2;border-radius:12px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;font-weight:700;font-size:0.85rem;height:42px;border:none;box-shadow:0 4px 14px rgba(239,68,68,0.4);display:flex;align-items:center;justify-content:center;gap:0.4rem;">
+                        <i class="bi bi-check-circle-fill"></i> Confirm Emergency Out
+                    </button>
                 </div>
             </div>
         </div>
@@ -814,21 +848,49 @@
     <!-- Return to Work Modal -->
     <div class="modal fade" id="returnToWorkModal" tabindex="-1" aria-labelledby="returnToWorkModalLabel">
         <div class="modal-dialog modal-sm modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title" id="returnToWorkModalLabel"><i class="bi bi-box-arrow-in-right me-2"></i>Return to Work</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-content" style="border:none;border-radius:24px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,0.22);">
+                <!-- Header -->
+                <div style="background:linear-gradient(135deg,#10b981 0%,#059669 60%,#047857 100%);padding:1.5rem 1.25rem 1.1rem;position:relative;overflow:hidden;">
+                    <div style="position:absolute;top:-18px;right:-18px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.08);"></div>
+                    <div style="position:absolute;bottom:-25px;left:-15px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,0.05);"></div>
+                    <div class="d-flex align-items-center gap-3" style="position:relative;z-index:1;">
+                        <div style="width:46px;height:46px;border-radius:14px;background:rgba(255,255,255,0.18);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,0.12);flex-shrink:0;">
+                            <i class="bi bi-box-arrow-in-right" style="font-size:1.3rem;color:#fff;"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0" id="returnToWorkModalLabel" style="color:#fff;font-weight:800;font-size:0.95rem;">Return to Work</h5>
+                            <div style="color:rgba(255,255,255,0.78);font-size:0.7rem;margin-top:0.1rem;">Resume your shift session</div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="position:absolute;top:0.9rem;right:1rem;opacity:0.8;"></button>
                 </div>
-                <div class="modal-body">
-                    <p class="text-muted small mb-3">Capture your return time to continue your work hours.</p>
-                    <div class="mb-2">
-                        <label class="form-label fw-semibold">Return Time In</label>
-                        <input type="time" class="form-control" id="returnTimeInInput" aria-label="Return Time In">
+                <!-- Body -->
+                <div class="modal-body" style="background:#fff;padding:1.25rem 1.25rem 0.75rem;">
+                    <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #bbf7d0;border-radius:12px;padding:0.65rem 0.9rem;margin-bottom:1.1rem;display:flex;align-items:center;gap:0.55rem;">
+                        <i class="bi bi-info-circle-fill" style="color:#10b981;font-size:0.9rem;flex-shrink:0;"></i>
+                        <span style="font-size:0.75rem;color:#065f46;font-weight:500;">Your work hours will continue from this return time.</span>
+                    </div>
+                    <div>
+                        <label class="form-label" style="font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Return Time In</label>
+                        <div style="position:relative;">
+                            <i class="bi bi-clock-fill" style="position:absolute;left:0.85rem;top:50%;transform:translateY(-50%);color:#10b981;font-size:0.9rem;pointer-events:none;"></i>
+                            <input type="time" class="form-control" id="returnTimeInInput" aria-label="Return Time In"
+                                style="padding-left:2.4rem;border-radius:12px;border:1.5px solid #e2e8f0;font-size:0.95rem;height:46px;font-weight:600;color:#1e293b;">
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-success btn-sm" onclick="submitReturnToWork()"><i class="bi bi-check-circle me-1"></i>OK</button>
+                <!-- Footer -->
+                <div style="background:#f8fafc;padding:0.85rem 1.25rem 1.25rem;border:none;display:flex;gap:0.6rem;">
+                    <button type="button" class="btn btn-sm"
+                        data-bs-dismiss="modal"
+                        style="flex:1;border-radius:12px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-weight:600;font-size:0.82rem;height:40px;">
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-sm"
+                        onclick="submitReturnToWork()"
+                        style="flex:2;border-radius:12px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-weight:700;font-size:0.82rem;height:40px;border:none;box-shadow:0 4px 12px rgba(16,185,129,0.4);display:flex;align-items:center;justify-content:center;gap:0.4rem;">
+                        <i class="bi bi-check-circle-fill"></i> Confirm Return
+                    </button>
                 </div>
             </div>
         </div>
