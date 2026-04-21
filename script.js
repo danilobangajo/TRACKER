@@ -3542,7 +3542,7 @@ function openAdminPanel() {
     btn.classList.remove('btn-outline-secondary');
     btn.classList.add('btn-secondary');
     sessionStorage.setItem('adminPanelOpen', '1');
-    // Hide User Manual button when admin panel is open
+    // Hide User Manual button and tooltip when admin panel is open
     const userManualBtn = document.querySelector('[data-bs-target="#userManualModal"]');
     if (userManualBtn) userManualBtn.style.display = 'none';
 }
@@ -3562,6 +3562,7 @@ function closeAdminPanel() {
     // Show User Manual button when admin panel is closed
     const userManualBtn = document.querySelector('[data-bs-target="#userManualModal"]');
     if (userManualBtn) userManualBtn.style.display = '';
+
 }
 
 function toggleAdminView() {

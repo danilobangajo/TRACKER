@@ -63,9 +63,10 @@
                                     <div class="text-muted" id="formCardSubtitle" style="font-size:0.68rem;line-height:1.2;">Red Victory Consumers Goods Trading</div>
                                 </div>
                             </div>
-                            <button class="btn btn-user-manual btn-sm" data-bs-toggle="modal" data-bs-target="#userManualModal" title="User Manual">
+                            <button class="btn btn-user-manual btn-sm" data-bs-toggle="modal" data-bs-target="#userManualModal" title="User Manual" id="userManualBtn">
                                 <i class="bi bi-book-fill"></i>
                             </button>
+
                         </div>
                         
                         <form id="attendanceForm">
@@ -450,88 +451,123 @@
 
     <!-- Add Employee Modal -->
     <div class="modal fade" id="addEmployeeModal" tabindex="-1" aria-labelledby="addEmployeeModalLabel">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addEmployeeModalLabel"><i class="bi bi-person-plus-fill me-2"></i>Add New Employee</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content ae-modal-content">
+                <!-- Header -->
+                <div class="ae-modal-header">
+                    <div class="ae-header-icon">
+                        <i class="bi bi-person-plus-fill"></i>
+                    </div>
+                    <div>
+                        <h5 class="ae-modal-title" id="addEmployeeModalLabel">Add New Employee</h5>
+                        <div class="ae-modal-subtitle">Fill in the details below to register an employee</div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
+
+                <!-- Body -->
+                <div class="ae-modal-body">
                     <form id="addEmployeeForm">
-                        <div class="mb-3">
-                            <label for="newEmployeeName" class="form-label">Employee Name</label>
-                            <input type="text" class="form-control" id="newEmployeeName" placeholder="Enter employee name" required>
+
+                        <!-- Employee Name -->
+                        <div class="ae-field-group">
+                            <label for="newEmployeeName" class="ae-label">
+                                <i class="bi bi-person-fill ae-label-icon"></i>Employee Name
+                            </label>
+                            <input type="text" class="ae-input" id="newEmployeeName" placeholder="" required>
                         </div>
-                        
-                        <div class="mb-3">
-                            <label for="scheduleStart" class="form-label">Schedule Time</label>
-                            <div class="row g-2">
-                                <div class="col-6">
-                                    <input type="time" class="form-control" id="scheduleStart" placeholder="Start" required>
-                                    <small class="text-muted">Start Time</small>
+
+                        <!-- Schedule Time -->
+                        <div class="ae-field-group">
+                            <label class="ae-label">
+                                <i class="bi bi-clock-fill ae-label-icon"></i>Schedule Time
+                            </label>
+                            <div class="ae-time-row">
+                                <div class="ae-time-col">
+                                    <div class="ae-time-badge ae-time-badge-start">START</div>
+                                    <input type="time" class="ae-input" id="scheduleStart" required>
                                 </div>
-                                <div class="col-6">
-                                    <input type="time" class="form-control" id="scheduleEnd" placeholder="End" required>
-                                    <small class="text-muted">End Time</small>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label class="form-label" id="weeklyDaysLabel">Weekly Days</label>
-                            <div class="d-flex flex-wrap gap-2">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="Mon" id="dayMon">
-                                    <label class="form-check-label" for="dayMon">Mon</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="Tue" id="dayTue">
-                                    <label class="form-check-label" for="dayTue">Tue</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="Wed" id="dayWed">
-                                    <label class="form-check-label" for="dayWed">Wed</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="Thu" id="dayThu">
-                                    <label class="form-check-label" for="dayThu">Thu</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="Fri" id="dayFri">
-                                    <label class="form-check-label" for="dayFri">Fri</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="Sat" id="daySat">
-                                    <label class="form-check-label" for="daySat">Sat</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="Sun" id="daySun">
-                                    <label class="form-check-label" for="daySun">Sun</label>
+                                <div class="ae-time-divider"><i class="bi bi-arrow-right"></i></div>
+                                <div class="ae-time-col">
+                                    <div class="ae-time-badge ae-time-badge-end">END</div>
+                                    <input type="time" class="ae-input" id="scheduleEnd" required>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Special Day Schedule (Optional)</label>
+                        <!-- Weekly Days -->
+                        <div class="ae-field-group">
+                            <label class="ae-label" id="weeklyDaysLabel">
+                                <i class="bi bi-calendar3 ae-label-icon"></i>Working Days
+                            </label>
+                            <div class="ae-days-grid">
+                                <label class="ae-day-chip">
+                                    <input type="checkbox" value="Mon" id="dayMon" hidden>
+                                    <span>Mon</span>
+                                </label>
+                                <label class="ae-day-chip">
+                                    <input type="checkbox" value="Tue" id="dayTue" hidden>
+                                    <span>Tue</span>
+                                </label>
+                                <label class="ae-day-chip">
+                                    <input type="checkbox" value="Wed" id="dayWed" hidden>
+                                    <span>Wed</span>
+                                </label>
+                                <label class="ae-day-chip">
+                                    <input type="checkbox" value="Thu" id="dayThu" hidden>
+                                    <span>Thu</span>
+                                </label>
+                                <label class="ae-day-chip">
+                                    <input type="checkbox" value="Fri" id="dayFri" hidden>
+                                    <span>Fri</span>
+                                </label>
+                                <label class="ae-day-chip">
+                                    <input type="checkbox" value="Sat" id="daySat" hidden>
+                                    <span>Sat</span>
+                                </label>
+                                <label class="ae-day-chip">
+                                    <input type="checkbox" value="Sun" id="daySun" hidden>
+                                    <span>Sun</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Special Day Schedule -->
+                        <div class="ae-field-group">
+                            <label class="ae-label">
+                                <i class="bi bi-star-fill ae-label-icon" style="color:#f59e0b;"></i>Special Day Schedule
+                                <span class="ae-optional-tag">Optional</span>
+                            </label>
                             <div id="specialDaysList"></div>
-                            <button type="button" class="btn btn-outline-secondary btn-sm mt-1" onclick="addSpecialDayRow('specialDaysList')"><i class="bi bi-plus-circle me-1"></i>Add Special Day</button>
+                            <button type="button" class="ae-add-special-btn" onclick="addSpecialDayRow('specialDaysList')">
+                                <i class="bi bi-plus-circle-fill me-1"></i>Add Special Day
+                            </button>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Schedule Notes (Optional)</label>
-                            <div class="d-flex flex-wrap gap-2" id="snBtnGroup">
-                                <button type="button" class="btn btn-outline-secondary btn-sm sn-btn active" data-value="" onclick="selectSchedNote(this,'snBtnGroup')">None</button>
-                                <button type="button" class="btn btn-outline-secondary btn-sm sn-btn" data-value="Flex" onclick="selectSchedNote(this,'snBtnGroup')">Flex</button>
-                                <button type="button" class="btn btn-outline-secondary btn-sm sn-btn" data-value="With 1Hr OT" onclick="selectSchedNote(this,'snBtnGroup')">With 1Hr OT</button>
-                                <button type="button" class="btn btn-outline-secondary btn-sm sn-btn" data-value="With 1Hr OT / Flex" onclick="selectSchedNote(this,'snBtnGroup')">With 1Hr OT / Flex</button>
-                                <button type="button" class="btn btn-outline-secondary btn-sm sn-btn" data-value="Float" onclick="selectSchedNote(this,'snBtnGroup'); applyFloatSchedule('scheduleStart','scheduleEnd','specialDaysList')">Float</button>
+                        <!-- Schedule Notes -->
+                        <div class="ae-field-group mb-0">
+                            <label class="ae-label">
+                                <i class="bi bi-tag-fill ae-label-icon" style="color:#8b5cf6;"></i>Schedule Notes
+                                <span class="ae-optional-tag">Optional</span>
+                            </label>
+                            <div class="ae-notes-grid" id="snBtnGroup">
+                                <button type="button" class="ae-note-chip sn-btn active" data-value="" onclick="selectSchedNote(this,'snBtnGroup')">None</button>
+                                <button type="button" class="ae-note-chip sn-btn" data-value="Flex" onclick="selectSchedNote(this,'snBtnGroup')">Flex</button>
+                                <button type="button" class="ae-note-chip sn-btn" data-value="With 1Hr OT" onclick="selectSchedNote(this,'snBtnGroup')">With 1Hr OT</button>
+                                <button type="button" class="ae-note-chip sn-btn" data-value="With 1Hr OT / Flex" onclick="selectSchedNote(this,'snBtnGroup')">With 1Hr OT / Flex</button>
+                                <button type="button" class="ae-note-chip sn-btn" data-value="Float" onclick="selectSchedNote(this,'snBtnGroup'); applyFloatSchedule('scheduleStart','scheduleEnd','specialDaysList')">Float</button>
                             </div>
                         </div>
+
                     </form>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="saveEmployee()"><i class="bi bi-save me-2"></i>Save Employee</button>
+
+                <!-- Footer -->
+                <div class="ae-modal-footer">
+                    <button type="button" class="ae-btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="ae-btn-save" onclick="saveEmployee()">
+                        <i class="bi bi-check-circle-fill me-2"></i>Save Employee
+                    </button>
                 </div>
             </div>
         </div>
@@ -920,85 +956,121 @@
 
     <!-- Edit Employee Modal -->
     <div class="modal fade" id="editEmployeeModal" tabindex="-1" aria-labelledby="editEmployeeModalLabel">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editEmployeeModalLabel"><i class="bi bi-pencil-square me-2"></i>Edit Employee</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content ae-modal-content">
+                <!-- Header -->
+                <div class="ae-modal-header" style="background:linear-gradient(135deg,#6366f1 0%,#4f46e5 55%,#4338ca 100%);">
+                    <div class="ae-header-icon">
+                        <i class="bi bi-pencil-square"></i>
+                    </div>
+                    <div>
+                        <h5 class="ae-modal-title" id="editEmployeeModalLabel">Edit Employee</h5>
+                        <div class="ae-modal-subtitle">Update the employee's schedule and details</div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
+
+                <!-- Body -->
+                <div class="ae-modal-body">
                     <input type="hidden" id="editEmployeeId">
-                    <div class="mb-3">
-                        <label for="editEmployeeName" class="form-label">Employee Name</label>
-                        <input type="text" class="form-control" id="editEmployeeName" required>
+
+                    <!-- Employee Name -->
+                    <div class="ae-field-group">
+                        <label for="editEmployeeName" class="ae-label">
+                            <i class="bi bi-person-fill ae-label-icon" style="color:#6366f1;"></i>Employee Name
+                        </label>
+                        <input type="text" class="ae-input ae-input-edit" id="editEmployeeName" required>
                     </div>
-                    <div class="mb-3">
-                        <label for="editScheduleStart" class="form-label">Schedule Time</label>
-                        <div class="row g-2">
-                            <div class="col-6">
-                                <input type="time" class="form-control" id="editScheduleStart" required>
-                                <small class="text-muted">Start Time</small>
+
+                    <!-- Schedule Time -->
+                    <div class="ae-field-group">
+                        <label class="ae-label">
+                            <i class="bi bi-clock-fill ae-label-icon" style="color:#6366f1;"></i>Schedule Time
+                        </label>
+                        <div class="ae-time-row">
+                            <div class="ae-time-col">
+                                <div class="ae-time-badge ae-time-badge-start">START</div>
+                                <input type="time" class="ae-input ae-input-edit" id="editScheduleStart" required>
                             </div>
-                            <div class="col-6">
-                                <input type="time" class="form-control" id="editScheduleEnd" required>
-                                <small class="text-muted">End Time</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label" id="editWeeklyDaysLabel">Weekly Days</label>
-                        <div class="d-flex flex-wrap gap-2">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="editDayMon">
-                                <label class="form-check-label" for="editDayMon">Mon</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="editDayTue">
-                                <label class="form-check-label" for="editDayTue">Tue</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="editDayWed">
-                                <label class="form-check-label" for="editDayWed">Wed</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="editDayThu">
-                                <label class="form-check-label" for="editDayThu">Thu</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="editDayFri">
-                                <label class="form-check-label" for="editDayFri">Fri</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="editDaySat">
-                                <label class="form-check-label" for="editDaySat">Sat</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="editDaySun">
-                                <label class="form-check-label" for="editDaySun">Sun</label>
+                            <div class="ae-time-divider"><i class="bi bi-arrow-right"></i></div>
+                            <div class="ae-time-col">
+                                <div class="ae-time-badge ae-time-badge-end">END</div>
+                                <input type="time" class="ae-input ae-input-edit" id="editScheduleEnd" required>
                             </div>
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Special Day Schedule (Optional)</label>
+                    <!-- Weekly Days -->
+                    <div class="ae-field-group">
+                        <label class="ae-label" id="editWeeklyDaysLabel">
+                            <i class="bi bi-calendar3 ae-label-icon" style="color:#6366f1;"></i>Working Days
+                        </label>
+                        <div class="ae-days-grid">
+                            <label class="ae-day-chip ae-day-chip-edit">
+                                <input type="checkbox" id="editDayMon" hidden>
+                                <span>Mon</span>
+                            </label>
+                            <label class="ae-day-chip ae-day-chip-edit">
+                                <input type="checkbox" id="editDayTue" hidden>
+                                <span>Tue</span>
+                            </label>
+                            <label class="ae-day-chip ae-day-chip-edit">
+                                <input type="checkbox" id="editDayWed" hidden>
+                                <span>Wed</span>
+                            </label>
+                            <label class="ae-day-chip ae-day-chip-edit">
+                                <input type="checkbox" id="editDayThu" hidden>
+                                <span>Thu</span>
+                            </label>
+                            <label class="ae-day-chip ae-day-chip-edit">
+                                <input type="checkbox" id="editDayFri" hidden>
+                                <span>Fri</span>
+                            </label>
+                            <label class="ae-day-chip ae-day-chip-edit">
+                                <input type="checkbox" id="editDaySat" hidden>
+                                <span>Sat</span>
+                            </label>
+                            <label class="ae-day-chip ae-day-chip-edit">
+                                <input type="checkbox" id="editDaySun" hidden>
+                                <span>Sun</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Special Day Schedule -->
+                    <div class="ae-field-group">
+                        <label class="ae-label">
+                            <i class="bi bi-star-fill ae-label-icon" style="color:#f59e0b;"></i>Special Day Schedule
+                            <span class="ae-optional-tag">Optional</span>
+                        </label>
                         <div id="editSpecialDaysList"></div>
-                        <button type="button" class="btn btn-outline-secondary btn-sm mt-1" onclick="addSpecialDayRow('editSpecialDaysList')"><i class="bi bi-plus-circle me-1"></i>Add Special Day</button>
+                        <button type="button" class="ae-add-special-btn" onclick="addSpecialDayRow('editSpecialDaysList')">
+                            <i class="bi bi-plus-circle-fill me-1"></i>Add Special Day
+                        </button>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Schedule Notes (Optional)</label>
-                        <div class="d-flex flex-wrap gap-2" id="esnBtnGroup">
-                            <button type="button" class="btn btn-outline-secondary btn-sm sn-btn active" data-value="" onclick="selectSchedNote(this,'esnBtnGroup')">None</button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm sn-btn" data-value="Flex" onclick="selectSchedNote(this,'esnBtnGroup')">Flex</button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm sn-btn" data-value="With 1Hr OT" onclick="selectSchedNote(this,'esnBtnGroup')">With 1Hr OT</button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm sn-btn" data-value="With 1Hr OT / Flex" onclick="selectSchedNote(this,'esnBtnGroup')">With 1Hr OT / Flex</button>
-                            <button type="button" class="btn btn-outline-secondary btn-sm sn-btn" data-value="Float" onclick="selectSchedNote(this,'esnBtnGroup'); applyFloatSchedule('editScheduleStart','editScheduleEnd','editSpecialDaysList')">Float</button>
+                    <!-- Schedule Notes -->
+                    <div class="ae-field-group mb-0">
+                        <label class="ae-label">
+                            <i class="bi bi-tag-fill ae-label-icon" style="color:#8b5cf6;"></i>Schedule Notes
+                            <span class="ae-optional-tag">Optional</span>
+                        </label>
+                        <div class="ae-notes-grid" id="esnBtnGroup">
+                            <button type="button" class="ae-note-chip sn-btn active" data-value="" onclick="selectSchedNote(this,'esnBtnGroup')">None</button>
+                            <button type="button" class="ae-note-chip sn-btn" data-value="Flex" onclick="selectSchedNote(this,'esnBtnGroup')">Flex</button>
+                            <button type="button" class="ae-note-chip sn-btn" data-value="With 1Hr OT" onclick="selectSchedNote(this,'esnBtnGroup')">With 1Hr OT</button>
+                            <button type="button" class="ae-note-chip sn-btn" data-value="With 1Hr OT / Flex" onclick="selectSchedNote(this,'esnBtnGroup')">With 1Hr OT / Flex</button>
+                            <button type="button" class="ae-note-chip sn-btn" data-value="Float" onclick="selectSchedNote(this,'esnBtnGroup'); applyFloatSchedule('editScheduleStart','editScheduleEnd','editSpecialDaysList')">Float</button>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="saveEditEmployee()"><i class="bi bi-save me-2"></i>Save Changes</button>
+
+                <!-- Footer -->
+                <div class="ae-modal-footer">
+                    <button type="button" class="ae-btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="ae-btn-save ae-btn-save-edit" onclick="saveEditEmployee()">
+                        <i class="bi bi-check-circle-fill me-2"></i>Save Changes
+                    </button>
                 </div>
             </div>
         </div>
@@ -1090,4 +1162,5 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div>  
+    
