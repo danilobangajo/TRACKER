@@ -2044,6 +2044,264 @@ img, .company-logo, .app-icon {
 }
 
 
+/* ===== WEEKLY REPORT MODAL — Department-Themed Professional Design ===== */
+
+/* Modal backdrop & content base */
+#weeklyReportModal .modal-content {
+    border: none;
+    border-radius: 0;
+    overflow: hidden;
+    background: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    height: 100%;             /* fill fullscreen modal height */
+}
+
+/* ── Header — RV (green, default) ── */
+#weeklyReportModal .modal-header {
+    background: linear-gradient(135deg, #065f46 0%, #047857 45%, #059669 75%, #10b981 100%);
+    border: none;
+    padding: 1.1rem 1.5rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(5,150,105,0.35);
+}
+#weeklyReportModal .modal-header::before {
+    content: '';
+    position: absolute;
+    top: -30px; right: -30px;
+    width: 130px; height: 130px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.07);
+    pointer-events: none;
+}
+#weeklyReportModal .modal-header::after {
+    content: '';
+    position: absolute;
+    bottom: -40px; left: -20px;
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+    pointer-events: none;
+}
+#weeklyReportModal .modal-title {
+    color: #fff;
+    font-weight: 800;
+    font-size: 1rem;
+    letter-spacing: 0.3px;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+#weeklyReportModal .modal-title i {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+#weeklyReportModal .modal-header .btn-close {
+    filter: invert(1) brightness(2);
+    opacity: 0.85;
+    position: relative;
+    z-index: 1;
+}
+#weeklyReportModal .modal-header .btn-close:hover {
+    opacity: 1;
+}
+
+/* ── Header — COMS (red) ── */
+body.coms-active #weeklyReportModal .modal-header {
+    background: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 45%, #dc2626 75%, #ef4444 100%);
+    box-shadow: 0 4px 20px rgba(220,38,38,0.35);
+}
+
+/* ── Modal body background ── */
+#weeklyReportModal .modal-body {
+    background: #f1f5f9;
+    padding: 1.25rem 1.5rem;
+    overflow: hidden;         /* body itself does NOT scroll */
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* ── Inner card ── */
+#weeklyReportModal .modal-body .card {
+    border-radius: 18px;
+    border: none;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    overflow: hidden;
+    animation: none;
+    transform: none;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;            /* allow flex child to shrink */
+}
+#weeklyReportModal .modal-body .card:hover {
+    transform: none;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+}
+#weeklyReportModal .modal-body .card-body {
+    padding: 1.25rem 1.35rem;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;            /* allow flex child to shrink */
+    overflow: hidden;
+}
+
+/* ── Table wrapper — ONLY this scrolls ── */
+#weeklyReportModal .table-responsive {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: auto;
+    min-height: 0;
+    border-radius: 0 0 12px 12px;
+}
+#weeklyReportModal .table-responsive::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+#weeklyReportModal .table-responsive::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+#weeklyReportModal .table-responsive::-webkit-scrollbar-thumb {
+    background: #6ee7b7;
+    border-radius: 4px;
+}
+body.coms-active #weeklyReportModal .table-responsive::-webkit-scrollbar-thumb {
+    background: #fca5a5;
+}
+
+/* ── Top section (title + filters + date label) stays fixed ── */
+#weeklyReportModal .card-body > .d-flex,
+#weeklyReportModal .card-body > .text-center {
+    flex-shrink: 0;
+}
+
+/* ── Card title row ── */
+#weeklyReportModal .card-title {
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #1e293b;
+    letter-spacing: 0.2px;
+}
+
+/* ── Filter bar — RV green accent ── */
+#weeklyReportModal .filter-controls {
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    border: 1.5px solid #6ee7b7;
+    border-radius: 14px;
+    padding: 0.7rem 1.1rem;
+    gap: 1.5rem;
+    box-shadow: 0 2px 8px rgba(16,185,129,0.10);
+}
+#weeklyReportModal .filter-label {
+    color: #065f46;
+    font-weight: 800;
+    font-size: 0.68rem;
+    letter-spacing: 0.8px;
+}
+#weeklyReportModal .filter-item .form-control {
+    border: 1.5px solid #6ee7b7;
+    border-radius: 10px;
+    background: #fff;
+    color: #065f46;
+    font-weight: 600;
+    font-size: 0.82rem;
+    min-height: 36px;
+    padding: 0.3rem 0.65rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+#weeklyReportModal .filter-item .form-control:focus {
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16,185,129,0.15);
+    outline: none;
+}
+
+/* ── Filter bar — COMS red accent ── */
+body.coms-active #weeklyReportModal .filter-controls {
+    background: linear-gradient(135deg, #fff5f5, #fee2e2);
+    border-color: #fca5a5;
+    box-shadow: 0 2px 8px rgba(239,68,68,0.10);
+}
+body.coms-active #weeklyReportModal .filter-label {
+    color: #7f1d1d;
+}
+body.coms-active #weeklyReportModal .filter-item .form-control {
+    border-color: #fca5a5;
+    color: #7f1d1d;
+}
+body.coms-active #weeklyReportModal .filter-item .form-control:focus {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239,68,68,0.15);
+}
+
+/* ── Selected date label — RV ── */
+#weeklyReportModal #selectedDateModal {
+    color: #047857 !important;
+    font-size: 0.88rem;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    padding: 0.35rem 1rem;
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    border-radius: 20px;
+    display: inline-block;
+    border: 1px solid #6ee7b7;
+}
+
+/* ── Selected date label — COMS ── */
+body.coms-active #weeklyReportModal #selectedDateModal {
+    color: #b91c1c !important;
+    background: linear-gradient(135deg, #fff5f5, #fee2e2);
+    border-color: #fca5a5;
+}
+
+/* ── Table header — RV green ── */
+#weeklyReportModal .table thead th {
+    background: linear-gradient(to bottom, #065f46, #047857) !important;
+    color: #fff !important;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    border-bottom: none;
+    padding: 0.6rem 0.75rem;
+    text-transform: uppercase;
+}
+
+/* ── Table header — COMS red ── */
+body.coms-active #weeklyReportModal .table thead th {
+    background: linear-gradient(to bottom, #7f1d1d, #b91c1c) !important;
+}
+
+/* ── Table rows ── */
+#weeklyReportModal .table tbody tr:hover {
+    background: #f0fdf4;
+}
+body.coms-active #weeklyReportModal .table tbody tr:hover {
+    background: #fff5f5;
+}
+#weeklyReportModal .table tbody td {
+    padding: 0.6rem 0.75rem;
+    vertical-align: middle;
+    font-size: 0.82rem;
+    border-color: #e2e8f0;
+}
+
+/* ── Table border accent — RV ── */
+#weeklyReportModal .table {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1.5px solid #6ee7b7;
+}
+body.coms-active #weeklyReportModal .table {
+    border-color: #fca5a5;
+}
+
+
 /* ===== ADD EMPLOYEE MODAL — Professional Redesign ===== */
 
 .ae-modal-content {
@@ -2532,4 +2790,130 @@ body.coms-active #addEmployeeModal .ae-btn-save:hover {
 /* Divider between fields — subtle separator */
 #attendanceForm .mb-3 + .mb-3 {
     padding-top: 0.1rem;
+}
+
+
+/* ===== ATTENDANCE DETAIL MODALS — Department-Themed Background ===== */
+/* Targets: employeeDetailsModal (dynamic) and reportZoomModal         */
+/* Only background colors change — text, buttons, badges untouched     */
+
+/* ── Modal content background — RV (green, default) ── */
+#reportZoomModal .modal-content,
+#employeeDetailsModal .modal-content {
+    background: #f1f5f9;
+}
+
+/* ── Modal header — RV green ── */
+#reportZoomModal .modal-header,
+#employeeDetailsModal .modal-header {
+    background: linear-gradient(135deg, #065f46 0%, #047857 45%, #059669 75%, #10b981 100%);
+    border: none;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(5,150,105,0.35);
+}
+#reportZoomModal .modal-header::before,
+#employeeDetailsModal .modal-header::before {
+    content: '';
+    position: absolute;
+    top: -30px; right: -30px;
+    width: 130px; height: 130px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.07);
+    pointer-events: none;
+}
+#reportZoomModal .modal-header::after,
+#employeeDetailsModal .modal-header::after {
+    content: '';
+    position: absolute;
+    bottom: -40px; left: -20px;
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+    pointer-events: none;
+}
+#reportZoomModal .modal-title,
+#employeeDetailsModal .modal-title,
+#reportZoomModal .modal-header h5,
+#employeeDetailsModal .modal-header h5 {
+    color: #fff;
+    position: relative;
+    z-index: 1;
+}
+#reportZoomModal .modal-header p,
+#employeeDetailsModal .modal-header p {
+    color: rgba(255,255,255,0.78) !important;
+    position: relative;
+    z-index: 1;
+}
+#reportZoomModal .modal-header .btn-close,
+#employeeDetailsModal .modal-header .btn-close {
+    filter: invert(1) brightness(2);
+    opacity: 0.85;
+    position: relative;
+    z-index: 1;
+}
+#reportZoomModal .modal-header .btn-close:hover,
+#employeeDetailsModal .modal-header .btn-close:hover {
+    opacity: 1;
+}
+
+/* ── Modal body background — RV ── */
+#reportZoomModal .modal-body,
+#employeeDetailsModal .modal-body {
+    background: #f1f5f9;
+}
+
+/* ── Table header — RV green ── */
+#reportZoomModal .table thead th,
+#employeeDetailsModal .table thead th {
+    background: linear-gradient(to bottom, #065f46, #047857) !important;
+    color: #fff !important;
+    border-bottom: none;
+}
+
+/* ── Table rows hover — RV ── */
+#reportZoomModal .table tbody tr:hover,
+#employeeDetailsModal .table tbody tr:hover {
+    background: #f0fdf4;
+}
+
+/* ── Table border — RV ── */
+#reportZoomModal .table,
+#employeeDetailsModal .table {
+    border: 1.5px solid #6ee7b7;
+}
+
+/* ── Scrollbar — RV ── */
+#reportZoomModal .table-responsive::-webkit-scrollbar-thumb,
+#employeeDetailsModal .modal-body::-webkit-scrollbar-thumb {
+    background: #6ee7b7;
+    border-radius: 4px;
+}
+
+/* ── COMS (red) overrides ── */
+body.coms-active #reportZoomModal .modal-header,
+body.coms-active #employeeDetailsModal .modal-header {
+    background: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 45%, #dc2626 75%, #ef4444 100%);
+    box-shadow: 0 4px 20px rgba(220,38,38,0.35);
+}
+
+body.coms-active #reportZoomModal .table thead th,
+body.coms-active #employeeDetailsModal .table thead th {
+    background: linear-gradient(to bottom, #7f1d1d, #b91c1c) !important;
+}
+
+body.coms-active #reportZoomModal .table tbody tr:hover,
+body.coms-active #employeeDetailsModal .table tbody tr:hover {
+    background: #fff5f5;
+}
+
+body.coms-active #reportZoomModal .table,
+body.coms-active #employeeDetailsModal .table {
+    border-color: #fca5a5;
+}
+
+body.coms-active #reportZoomModal .table-responsive::-webkit-scrollbar-thumb,
+body.coms-active #employeeDetailsModal .modal-body::-webkit-scrollbar-thumb {
+    background: #fca5a5;
 }
