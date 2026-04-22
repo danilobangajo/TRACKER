@@ -775,6 +775,7 @@ function switchDepartment(dept) {
     
     const dot = document.getElementById('deptDot');
     const formSubtitle = document.getElementById('formCardSubtitle');
+    const cardTitleWrapper = document.querySelector('#formCol .card-title-wrapper');
     if (dept === 'rv') {
         rvTab.classList.add('active');
         rvTab.classList.remove('btn-outline-primary');
@@ -785,11 +786,10 @@ function switchDepartment(dept) {
         document.getElementById('companyName').textContent = 'Red Victory Consumers Goods Trading';
         body.classList.remove('coms-active');
         body.classList.add('rv-active');
-        // department background image
         body.classList.remove('coms-bg');
         body.classList.add('rv-bg');
-        dot.classList.remove('text-danger');
-        dot.classList.add('text-success');
+        if (dot) { dot.classList.remove('text-danger'); dot.classList.add('text-success'); }
+        if (cardTitleWrapper) cardTitleWrapper.style.background = 'linear-gradient(135deg, #065f46 0%, #047857 50%, #059669 100%)';
         if (formSubtitle) formSubtitle.textContent = 'Red Victory Consumers Goods Trading';
     } else {
         comsTab.classList.add('active');
@@ -801,11 +801,10 @@ function switchDepartment(dept) {
         document.getElementById('companyName').textContent = 'C. Operations Management Services';
         body.classList.remove('rv-active');
         body.classList.add('coms-active');
-        // department background image
         body.classList.remove('rv-bg');
         body.classList.add('coms-bg');
-        dot.classList.remove('text-success');
-        dot.classList.add('text-danger');
+        if (dot) { dot.classList.remove('text-success'); dot.classList.add('text-danger'); }
+        if (cardTitleWrapper) cardTitleWrapper.style.background = 'linear-gradient(135deg, #7f1d1d 0%, #b91c1c 50%, #dc2626 100%)';
         if (formSubtitle) formSubtitle.textContent = 'C. Operations Management Services';
     }
     
@@ -2346,9 +2345,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     updateDashboard();
     initScheduleOverrideControls();
     
-    // Set initial RV theme
-    document.body.classList.add('rv-active');
-
     // Blur focus on any modal hide to prevent aria-hidden focus conflict
     document.querySelectorAll('.modal').forEach(modalEl => {
         modalEl.addEventListener('hide.bs.modal', function() {
@@ -2359,10 +2355,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
 
     // Restore department state after refresh
-    const savedDept = sessionStorage.getItem('activeDepartment');
-    if (savedDept && savedDept !== 'rv') {
-        switchDepartment(savedDept);
-    }
+    const savedDept = sessionStorage.getItem('activeDepartment') || 'rv';
+    switchDepartment(savedDept);
 
     // Restore admin panel state after refresh
     if (sessionStorage.getItem('adminPanelOpen') === '1') {
@@ -3641,9 +3635,8 @@ function verifyAdminPassword() {
                 }
             }, 1000);
         } else {
-            const left = 5 - _adminAttempts;
             errorEl.classList.remove('d-none');
-            errorEl.innerHTML = `<i class="bi bi-exclamation-circle-fill"></i> Incorrect password. ${left} attempt${left !== 1 ? 's' : ''} left.`;
+            errorEl.innerHTML = '<i class="bi bi-exclamation-circle-fill"></i> Incorrect password. Please try again.';
             input.focus();
         }
     }

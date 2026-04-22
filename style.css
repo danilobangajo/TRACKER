@@ -1095,7 +1095,7 @@ td.policy-color-13 {
 
 /* Admin Toggle Button */
 #adminToggleBtn {
-    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
     color: #fff;
     border: 1.5px solid rgba(255,255,255,0.3);
     border-radius: 20px;
@@ -1103,7 +1103,7 @@ td.policy-color-13 {
     font-weight: 700;
     font-size: 0.8rem;
     letter-spacing: 0.3px;
-    box-shadow: 0 4px 12px rgba(139,92,246,0.45), inset 0 1px 0 rgba(255,255,255,0.2);
+    box-shadow: 0 4px 12px rgba(55,65,81,0.45), inset 0 1px 0 rgba(255,255,255,0.2);
     transition: all 0.3s ease;
     display: inline-flex;
     align-items: center;
@@ -1113,21 +1113,21 @@ td.policy-color-13 {
 
 #adminToggleBtn:hover {
     transform: translateY(-2px);
-    background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
     color: #fff;
-    box-shadow: 0 6px 18px rgba(139,92,246,0.55), inset 0 1px 0 rgba(255,255,255,0.25);
+    box-shadow: 0 6px 18px rgba(55,65,81,0.55), inset 0 1px 0 rgba(255,255,255,0.25);
 }
 
 #adminToggleBtn.btn-secondary {
-    background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+    background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
     color: #fff;
     border-color: rgba(255,255,255,0.3);
-    box-shadow: 0 4px 14px rgba(236,72,153,0.45), 0 0 0 3px rgba(255,255,255,0.2), inset 0 1px 0 rgba(255,255,255,0.15);
+    box-shadow: 0 4px 14px rgba(31,41,55,0.45), 0 0 0 3px rgba(255,255,255,0.2), inset 0 1px 0 rgba(255,255,255,0.15);
 }
 
 #adminToggleBtn.btn-secondary:hover {
-    background: linear-gradient(135deg, #f472b6 0%, #ec4899 100%);
-    box-shadow: 0 6px 20px rgba(236,72,153,0.55), 0 0 0 4px rgba(255,255,255,0.25), inset 0 1px 0 rgba(255,255,255,0.2);
+    background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+    box-shadow: 0 6px 20px rgba(31,41,55,0.55), 0 0 0 4px rgba(255,255,255,0.25), inset 0 1px 0 rgba(255,255,255,0.2);
 }
 
 /* Daily Report Button */
@@ -1310,11 +1310,10 @@ td.policy-color-13 {
     color: var(--danger-color) !important;
 }
 
-/* User Manual button — colored gradient */
+/* User Manual button — no background, 3D icon */
 .btn-user-manual {
-    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    background: transparent;
     border: none;
-    color: #fff;
     width: 30px;
     height: 30px;
     padding: 0;
@@ -1322,20 +1321,38 @@ td.policy-color-13 {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 3px 8px rgba(99,102,241,0.35);
-    transition: all 0.2s ease;
+    box-shadow: none;
+    transition: transform 0.2s ease, filter 0.2s ease;
     flex-shrink: 0;
     position: relative;
 }
 .btn-user-manual i {
-    font-size: 0.85rem;
+    font-size: 1.15rem;
     color: #fff;
+    filter:
+        drop-shadow(0px 3px 0px rgba(0,0,0,0.35))
+        drop-shadow(0px 1px 0px rgba(255,255,255,0.25))
+        drop-shadow(1px 1px 2px rgba(0,0,0,0.4));
+    transition: filter 0.2s ease, transform 0.2s ease;
 }
 .btn-user-manual:hover {
-    background: linear-gradient(135deg, #4f46e5, #4338ca);
-    transform: translateY(-1px);
-    box-shadow: 0 5px 14px rgba(99,102,241,0.45);
+    background: transparent;
+    transform: translateY(-2px);
+    box-shadow: none;
     color: #fff;
+}
+.btn-user-manual:hover i {
+    filter:
+        drop-shadow(0px 5px 0px rgba(0,0,0,0.4))
+        drop-shadow(0px 1px 0px rgba(255,255,255,0.3))
+        drop-shadow(2px 2px 4px rgba(0,0,0,0.5));
+    transform: scale(1.15);
+}
+.btn-user-manual:active i {
+    filter:
+        drop-shadow(0px 1px 0px rgba(0,0,0,0.3))
+        drop-shadow(0px 0px 1px rgba(255,255,255,0.2));
+    transform: scale(0.95) translateY(1px);
 }
 
 /* Tooltip cloud — points RIGHT toward the book button */
@@ -2364,4 +2381,155 @@ body.coms-active #addEmployeeModal .ae-btn-save {
 body.coms-active #addEmployeeModal .ae-btn-save:hover {
     background: linear-gradient(135deg, #dc2626, #b91c1c);
     box-shadow: 0 6px 20px rgba(239,68,68,0.5);
+}
+
+/* ===== ATTENDANCE LOG CARD — Professional Redesign ===== */
+
+/* Card header title area */
+#formCol .card-title-wrapper {
+    background: linear-gradient(135deg, #065f46 0%, #047857 50%, #059669 100%);
+    border-radius: 14px 14px 0 0;
+    margin: -0.65rem -0.75rem 0.75rem -0.75rem;
+    padding: 0.75rem 0.85rem;
+    border-bottom: none;
+    transition: background 0.4s ease;
+}
+
+#formCol .card-title {
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+}
+
+#formCol #formCardSubtitle {
+    color: rgba(255,255,255,0.6) !important;
+    font-size: 0.62rem !important;
+}
+
+#formCol #deptDot {
+    filter: drop-shadow(0 0 4px #10b981);
+}
+
+/* Form labels — styled with icon-like left accent */
+#attendanceForm .form-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+/* Inputs & selects inside the form */
+#attendanceForm .form-control,
+#attendanceForm .form-select {
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    background: #f8fafc;
+    color: #1e293b;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    padding: 0.35rem 0.65rem;
+    min-height: 34px;
+}
+
+#attendanceForm .form-control:focus,
+#attendanceForm .form-select:focus {
+    border-color: #6366f1;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.10);
+    outline: none;
+}
+
+#attendanceForm .form-control:disabled,
+#attendanceForm .form-control[readonly] {
+    background: #f1f5f9;
+    color: #94a3b8;
+    border-color: #e2e8f0;
+    cursor: not-allowed;
+}
+
+/* Employee name input — slightly highlighted */
+#employeeName {
+    border-color: #c7d2fe;
+    background: #eef2ff;
+    font-weight: 600;
+    color: #3730a3;
+}
+#employeeName:focus {
+    border-color: #6366f1;
+    background: #fff;
+    color: #1e293b;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+}
+
+/* Status select — colored accent */
+#attendanceStatus {
+    border-color: #bfdbfe;
+    background: #eff6ff;
+    color: #1e40af;
+    font-weight: 600;
+}
+#attendanceStatus:focus {
+    border-color: #3b82f6;
+    background: #fff;
+    color: #1e293b;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.10);
+}
+
+/* Time In — green accent */
+#timeIn {
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+    color: #065f46;
+    font-weight: 600;
+}
+#timeIn:focus {
+    border-color: #10b981;
+    background: #fff;
+    color: #1e293b;
+    box-shadow: 0 0 0 3px rgba(16,185,129,0.10);
+}
+
+/* Time Out — purple accent */
+#timeOut {
+    border-color: #e9d5ff;
+    background: #faf5ff;
+    color: #581c87;
+    font-weight: 600;
+}
+#timeOut:focus {
+    border-color: #8b5cf6;
+    background: #fff;
+    color: #1e293b;
+    box-shadow: 0 0 0 3px rgba(139,92,246,0.10);
+}
+
+/* Date input — blue accent */
+#attendanceDate {
+    border-color: #bfdbfe;
+    background: #eff6ff;
+    color: #1e40af;
+    font-weight: 600;
+}
+#attendanceDate:focus {
+    border-color: #3b82f6;
+    background: #fff;
+    color: #1e293b;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.10);
+}
+
+/* Field group spacing */
+#attendanceForm .mb-3 {
+    margin-bottom: 0.5rem !important;
+}
+
+/* Divider between fields — subtle separator */
+#attendanceForm .mb-3 + .mb-3 {
+    padding-top: 0.1rem;
 }
