@@ -1506,6 +1506,23 @@ document.getElementById('attendanceForm').addEventListener('submit', async funct
     let timeOut = document.getElementById('timeOut').value;
     const reason = document.getElementById('attendanceReason').value;
     const existingRecordId = document.getElementById('employeeName').getAttribute('data-existing-record-id');
+
+    // Require Time In for statuses that need it (not Absent, Sick Leave, AWOL, No Schedule)
+    const statusNeedsTimeIn = !existingRecordId && !['Absent', 'Sick Leave', 'AWOL', 'No Schedule'].includes(status);
+    if (statusNeedsTimeIn && !timeIn) {
+        const timeInEl = document.getElementById('timeIn');
+        timeInEl.style.borderColor = '#ef4444';
+        timeInEl.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.18)';
+        timeInEl.style.backgroundColor = '#fff5f5';
+        timeInEl.classList.add('timein-shake');
+        setTimeout(() => {
+            timeInEl.classList.remove('timein-shake');
+            timeInEl.style.borderColor = '';
+            timeInEl.style.boxShadow = '';
+            timeInEl.style.backgroundColor = '#f0fdf4';
+        }, 1800);
+        return;
+    }
     let lateMinutes = 0;
     let scheduleTime = '';
     let totalHours = 0;
@@ -2390,7 +2407,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         timeInInput.style.cursor = 'not-allowed';
         timeInInput.placeholder = '';
 
-        timeInInput.addEventListener('focus', function() {
+        timeInInput.addEventListener('click', function() {
             // Only auto-fill if field is empty
             if (!this.value) {
                 const now = new Date();
