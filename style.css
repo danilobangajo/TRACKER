@@ -2928,3 +2928,212 @@ body.coms-active #reportZoomModal .table-responsive::-webkit-scrollbar-thumb,
 body.coms-active #employeeDetailsModal .modal-body::-webkit-scrollbar-thumb {
     background: #fca5a5;
 }
+
+
+/* ===== ONE-DAY SCHEDULE MODAL — Premium Redesign ===== */
+
+.so-modal-content {
+    border: none;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.28);
+}
+
+/* Header */
+.so-modal-header {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 55%, #b45309 100%);
+    padding: 1.5rem 1.5rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: relative;
+    overflow: hidden;
+}
+.so-modal-header::before {
+    content: '';
+    position: absolute;
+    top: -24px; right: -24px;
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.10);
+    pointer-events: none;
+}
+.so-modal-header::after {
+    content: '';
+    position: absolute;
+    bottom: -30px; left: -20px;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    pointer-events: none;
+}
+.so-header-icon {
+    width: 48px; height: 48px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.20);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+    position: relative; z-index: 1;
+}
+.so-header-icon i {
+    font-size: 1.35rem;
+    color: #fff;
+}
+.so-modal-title {
+    color: #fff;
+    font-weight: 800;
+    font-size: 1rem;
+    margin: 0;
+    letter-spacing: 0.2px;
+    position: relative; z-index: 1;
+}
+.so-modal-subtitle {
+    color: rgba(255,255,255,0.75);
+    font-size: 0.72rem;
+    margin-top: 0.1rem;
+    position: relative; z-index: 1;
+}
+
+/* Body */
+.so-modal-body {
+    background: #f8fafc;
+    padding: 1.35rem 1.5rem 0.75rem;
+}
+
+/* Employee badge */
+.so-employee-badge {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #92400e;
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border: 1px solid #fcd34d;
+    border-radius: 10px;
+    padding: 0.4rem 0.85rem;
+    margin-bottom: 1rem;
+    min-height: 0;
+}
+.so-employee-badge:empty {
+    display: none;
+}
+
+/* Field groups */
+.so-field-group {
+    margin-bottom: 1rem;
+}
+.so-label {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #78350f;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 0.45rem;
+}
+
+/* Inputs */
+.so-input {
+    width: 100%;
+    border: 1.5px solid #fcd34d;
+    border-radius: 12px;
+    padding: 0.55rem 0.9rem;
+    font-size: 0.875rem;
+    color: #1e293b;
+    background: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+}
+.so-input:focus {
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245,158,11,0.15);
+}
+
+/* Radio chip group */
+.so-radio-group {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+.so-radio-chip {
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+.so-radio-chip input[type="radio"] {
+    display: none;
+}
+.so-radio-chip span {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.4rem 0.9rem;
+    border-radius: 10px;
+    border: 1.5px solid #e2e8f0;
+    background: #fff;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #64748b;
+    transition: all 0.18s ease;
+    cursor: pointer;
+}
+.so-radio-chip input[type="radio"]:checked + span {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border-color: #f59e0b;
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(245,158,11,0.35);
+}
+.so-radio-chip span:hover {
+    border-color: #f59e0b;
+    color: #d97706;
+}
+
+/* Broken schedule part wrapper */
+.so-broken-part {
+    background: #fff;
+    border: 1.5px solid #fde68a;
+    border-radius: 14px;
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.75rem;
+}
+.so-part-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: #92400e;
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border-radius: 6px;
+    padding: 0.15rem 0.55rem;
+    display: inline-block;
+    margin-bottom: 0.6rem;
+}
+
+/* Info note */
+.so-info-note {
+    font-size: 0.75rem;
+    color: #92400e;
+    background: linear-gradient(135deg, #fffbeb, #fef3c7);
+    border: 1px solid #fde68a;
+    border-radius: 10px;
+    padding: 0.55rem 0.85rem;
+    margin-top: 1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.3rem;
+}
+.so-info-note i {
+    color: #f59e0b;
+    flex-shrink: 0;
+    margin-top: 0.05rem;
+}
+
+/* Footer */
+.so-modal-footer {
+    background: #fef3c7;
+    padding: 0.9rem 1.5rem 1.25rem;
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    border-top: 1px solid #fde68a;
+}
