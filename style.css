@@ -24,7 +24,7 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Roboto', sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     background-attachment: fixed;
     color: var(--text-primary);
@@ -125,13 +125,12 @@ body.coms-active {
 /* Navbar */
 .navbar {
     padding: 0.4rem 0;
-    /* Make navbar fully opaque so background images don't tint the header/buttons */
-    background: #ffffff !important;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #0f172a 100%) !important;
     -webkit-backdrop-filter: blur(14px);
     backdrop-filter: blur(14px);
     border: none;
-    border-bottom: 1px solid rgba(0,0,0,0.06);
-    box-shadow: 0 2px 24px rgba(0,0,0,0.10);
+    border-bottom: 2px solid rgba(99,102,241,0.45);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.35), 0 1px 0 rgba(99,102,241,0.2);
     position: fixed;
     top: 0;
     left: 0;
@@ -143,20 +142,29 @@ body.coms-active {
 .navbar-brand {
     font-size: 0.95rem;
     font-weight: 800;
-    color: var(--text-primary) !important;
+    color: #f1f5f9 !important;
+    letter-spacing: 0.3px;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+.datetime-display .current-time {
+    color: #f1f5f9 !important;
+}
+.datetime-display .current-date {
+    color: #94a3b8 !important;
 }
 
 .app-icon {
     width: 30px;
     height: 30px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 10px;
+    background: rgba(99,102,241,0.18);
+    border: 1.5px solid rgba(99,102,241,0.45);
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    font-size: 1.1rem;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    color: #a5b4fc;
+    font-size: 1rem;
+    box-shadow: none;
 }
 
 /* Company Logo */
