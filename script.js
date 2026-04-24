@@ -2984,6 +2984,50 @@ function showOpenRecordAlert(message) {
     }
 }
 
+function showEmployeeSuggestions(query) {
+    const suggestionsEl = document.getElementById('employeeSuggestions');
+    if (!suggestionsEl) return;
+    const employees = JSON.parse(storage.getItem('employees') || '[]');
+    const deptEmps = employees
+        .filter(e => e.department === currentDepartment)
+        .sort((a, b) => a.name.localeCompare(b.name));
+    const q = (query || '').trim().toLowerCase();
+    const filtered = q ? deptEmps.filter(e => e.name.toLowerCase().includes(q)) : deptEmps;
+    if (filtered.length === 0) {
+        suggestionsEl.classList.remove('show');
+        return;
+    }
+    const attendanceData = loadAttendanceData();
+    const today = getLocalISODate();
+    suggestionsEl.innerHTML = '';
+    filtered.forEach(emp => {
+        const hasOpenRecord = attendanceData.some(r =>
+            r.name === emp.name && r.date === today &&
+            r.department === currentDepartment && r.timeIn && !r.timeOut
+        );
+        const item = document.createElement('div');
+        item.className = 'employee-suggestion-item';
+        item.innerHTML = emp.name + (hasOpenRecord ? '<span class="suggestion-badge">Time Out</span>' : '');
+        item.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            document.getElementById('employeeName').value = emp.name;
+            suggestionsEl.classList.remove('show');
+            document.getElementById('employeeName').dispatchEvent(new Event('change', { bubbles: true }));
+        });
+        suggestionsEl.appendChild(item);
+    });
+    suggestionsEl.classList.add('show');
+}
+
+// Hide suggestions when clicking outside
+document.addEventListener('click', function(e) {
+    const input = document.getElementById('employeeName');
+    const suggestions = document.getElementById('employeeSuggestions');
+    if (suggestions && input && !input.contains(e.target) && !suggestions.contains(e.target)) {
+        suggestions.classList.remove('show');
+    }
+});
+
 function addManualTimeoutButton() {
     // Time Out is a plain manual input, nothing to setup
 }
@@ -3282,8 +3326,17 @@ function addEmployeeNameListener() {
     // Lightweight handler while typing: don't populate records until the user
     // commits the value (change event). This prevents partial input from
     // triggering time-in/time-out modes prematurely.
-    employeeNameInput.addEventListener('input', handleEmployeeNameTyping);
+    employeeNameInput.addEventListener('input', function() {
+        handleEmployeeNameTyping();
+        showEmployeeSuggestions(this.value);
+    });
+    employeeNameInput.addEventListener('focus', function() {
+        showEmployeeSuggestions(this.value);
+    });
     employeeNameInput.addEventListener('change', handleEmployeeNameChange);
+    employeeNameInput.addEventListener('click', function() {
+        showEmployeeSuggestions(this.value);
+    });
     dateInput.addEventListener('change', function() {
         handleEmployeeNameChange();
         const name = employeeNameInput.value;
@@ -3548,6 +3601,8 @@ function openAdminPanel() {
     document.getElementById('adminControls').style.visibility = 'visible';
     document.getElementById('formCol').className = 'col-lg-3';
     document.getElementById('mainRow').classList.add('admin-open');
+    const logos = document.getElementById('deptLogos');
+    if (logos) logos.style.display = 'none';
     const btn = document.getElementById('adminToggleBtn');
     btn.innerHTML = '<i class="bi bi-x-lg"></i>';
     btn.classList.remove('btn-outline-secondary');
@@ -3564,6 +3619,8 @@ function closeAdminPanel() {
     document.getElementById('adminControls').style.visibility = 'hidden';
     document.getElementById('formCol').className = 'col-lg-3';
     document.getElementById('mainRow').classList.remove('admin-open');
+    const logos = document.getElementById('deptLogos');
+    if (logos) logos.style.display = '';
     const btn = document.getElementById('adminToggleBtn');
     btn.innerHTML = '<i class="bi bi-shield-lock me-1"></i>Admin';
     btn.classList.remove('btn-secondary');

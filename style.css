@@ -1756,8 +1756,9 @@ img, .company-logo, .app-icon {
     }
 
     .navbar .container-fluid {
-        padding-left: 0.85rem;
-        padding-right: 0.85rem;
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+        overflow: visible;
     }
 
     .app-icon {
@@ -1792,10 +1793,12 @@ img, .company-logo, .app-icon {
         display: flex;
         flex-direction: row;
         align-items: center;
-        gap: 0.4rem;
-        padding: 0.35rem 0.25rem 0.25rem;
+        gap: 0.25rem;
+        padding: 0.3rem 0.25rem 0.25rem;
         width: 100%;
         flex-wrap: nowrap;
+        overflow: visible;
+        box-sizing: border-box;
     }
 
     #tabBar > div:first-child {
@@ -1805,13 +1808,13 @@ img, .company-logo, .app-icon {
     #tabBar .btn-group {
         display: flex !important;
         flex-shrink: 0;
-        gap: 0.35rem;
+        gap: 0.2rem;
     }
 
     #tabBar > div:last-child {
         display: flex;
         align-items: center;
-        gap: 0.35rem;
+        gap: 0.2rem;
         margin-left: auto;
         flex-shrink: 0;
     }
@@ -1820,29 +1823,32 @@ img, .company-logo, .app-icon {
     #rvTab,
     #comsTab {
         flex: none;
-        padding: 0.45rem 1.1rem;
-        font-size: 0.82rem;
+        padding: 0.3rem 0.6rem;
+        font-size: 0.72rem;
         font-weight: 800;
-        border-radius: 14px;
-        letter-spacing: 0.3px;
-        border-width: 2px;
+        border-radius: 10px;
+        letter-spacing: 0.2px;
+        border-width: 1.5px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
+        min-width: unset;
     }
 
     /* Admin button — compact and aligned */
     #adminToggleBtn {
-        padding: 0 0.75rem;
-        font-size: 0.82rem;
-        border-radius: 10px;
+        padding: 0.3rem 0.55rem;
+        font-size: 0.72rem;
+        border-radius: 8px;
         display: inline-flex !important;
         align-items: center;
         justify-content: center;
         visibility: visible !important;
         opacity: 1 !important;
-        gap: 0.4rem;
-        height: 40px;
+        gap: 0.25rem;
+        white-space: nowrap;
+        flex-shrink: 0;
+        min-width: unset;
     }
 
     /* small admin controls container */
@@ -1853,8 +1859,8 @@ img, .company-logo, .app-icon {
 
     /* Main content area */
     .container-fluid.px-4 {
-        padding-left: 0.75rem !important;
-        padding-right: 0.75rem !important;
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
         padding-top: 0.5rem !important;
     }
 
@@ -2934,6 +2940,121 @@ body.coms-active #employeeDetailsModal .modal-body::-webkit-scrollbar-thumb {
     background: #fca5a5;
 }
 
+
+/* ===== CUSTOM EMPLOYEE AUTOCOMPLETE ===== */
+.employee-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1.5px solid #c7d2fe;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(99,102,241,0.15);
+    z-index: 9999;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+    margin-top: 2px;
+}
+.employee-suggestions.show {
+    display: block;
+}
+.employee-suggestion-item {
+    padding: 0.45rem 0.75rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #1e293b;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    border-bottom: 1px solid #f1f5f9;
+}
+.employee-suggestion-item:last-child {
+    border-bottom: none;
+}
+.employee-suggestion-item:hover,
+.employee-suggestion-item.active {
+    background: #eef2ff;
+    color: #4f46e5;
+    font-weight: 600;
+}
+.employee-suggestion-item .suggestion-badge {
+    font-size: 0.65rem;
+    background: #fef3c7;
+    color: #92400e;
+    border-radius: 6px;
+    padding: 0.1rem 0.4rem;
+    margin-left: 0.4rem;
+    font-weight: 600;
+}
+
+/* ===== DEPARTMENT LOGOS — Desktop User View Only ===== */
+.dept-logos-wrapper {
+    position: fixed;
+    top: 52px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4vw;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.dept-logo-box {
+    width: clamp(210px, 21vw, 300px);
+    height: clamp(210px, 21vw, 300px);
+    border-radius: 20px;
+    overflow: hidden;
+    transition: opacity 0.5s ease, transform 0.5s ease, filter 0.5s ease;
+    cursor: pointer;
+    pointer-events: all;
+}
+
+.dept-logo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 20px;
+}
+
+/* RV active: RV logo bright, COMS logo dim */
+body.rv-active #rvLogoBox {
+    opacity: 1;
+    filter: none;
+    transform: scale(1);
+}
+body.rv-active #comsLogoBox {
+    opacity: 0.25;
+    filter: grayscale(60%) brightness(0.7);
+    transform: scale(0.95);
+}
+
+/* COMS active: COMS logo bright, RV logo dim */
+body.coms-active #comsLogoBox {
+    opacity: 1;
+    filter: none;
+    transform: scale(1);
+}
+body.coms-active #rvLogoBox {
+    opacity: 0.25;
+    filter: grayscale(60%) brightness(0.7);
+    transform: scale(0.95);
+}
+
+/* Hide logos on mobile */
+@media (max-width: 991px) {
+    .dept-logos-wrapper {
+        display: none !important;
+    }
+}
+
+/* Hide logos when admin panel is open */
+.admin-open ~ .dept-logos-wrapper {
+    display: none;
+}
 
 /* ===== ONE-DAY SCHEDULE MODAL — Premium Redesign ===== */
 

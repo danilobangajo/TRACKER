@@ -53,6 +53,16 @@
             </div>
         </div>
 
+        <!-- Department Logos (desktop user view only) -->
+        <div id="deptLogos" class="dept-logos-wrapper">
+            <div class="dept-logo-box" id="rvLogoBox" onclick="switchDepartment('rv')">
+                <img src="rv_logo.jpg" alt="RV Logo" class="dept-logo-img">
+            </div>
+            <div class="dept-logo-box" id="comsLogoBox" onclick="switchDepartment('coms')">
+                <img src="coms_logo.jpg" alt="COMS Logo" class="dept-logo-img">
+            </div>
+        </div>
+
         <div class="row g-4 justify-content-center" id="mainRow">
             <!-- Left: Attendance Log Form -->
             <div class="col-lg-3" id="formCol">
@@ -74,8 +84,9 @@
                         <form id="attendanceForm">
                             <div class="mb-3">
                                 <label for="employeeName" class="form-label">Employee Name</label>
-                                <div class="d-flex align-items-center gap-2">
-                                    <input type="text" class="form-control" id="employeeName" placeholder="Enter employee name" list="employeeList" required aria-label="Employee Name">
+                                <div style="position:relative;">
+                                <input type="text" class="form-control" id="employeeName" placeholder="Enter employee name" autocomplete="off" required aria-label="Employee Name">
+                                <div id="employeeSuggestions" class="employee-suggestions"></div>
                                 </div>
                                 <datalist id="employeeList"></datalist>
                             </div>
