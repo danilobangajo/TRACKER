@@ -282,11 +282,15 @@
                             <i class="bi bi-exclamation-octagon-fill"></i>
                         </div>
                         <div class="um-content">
-                            <div class="um-title">Emergency Out &amp; Return</div>
+                            <div class="um-title">Emergency Time In &amp; Emergency Out</div>
                             <ol class="um-list">
-                                <li>In Time Out mode, click the <strong style="color:#ef4444;"><i class="bi bi-exclamation-octagon-fill"></i> red icon</strong> beside Time Out, enter a reason, and confirm.</li>
-                                <li>When you return, select your name and click <strong>Return</strong> to continue your shift.</li>
-                                <li>At end of shift, submit your final <strong>Time Out</strong> — both sessions are combined.</li>
+                                <li>Click the <strong style="color:#ef4444;"><i class="bi bi-exclamation-octagon-fill"></i> red icon</strong> beside Time Out to open the Emergency modal.</li>
+                                <li>Choose a mode:
+                                    <ul style="margin-top:0.3rem;">
+                                        <li><strong style="color:#4f46e5;"><i class="bi bi-hourglass-split"></i> Emergency Time In</strong> — use this if you arrived on time but the office or system was not yet open. Enter your actual arrival time and a <strong>required reason</strong>, then confirm. Your Time In will be set automatically in the form.</li>
+                                        <li><strong style="color:#dc2626;"><i class="bi bi-exclamation-octagon-fill"></i> Emergency Out</strong> — use this to log an early departure. Enter Time Out and an optional reason. Status becomes <strong>Undertime</strong>. Use <strong>Return</strong> to resume your shift, then submit final Time Out.</li>
+                                    </ul>
+                                </li>
                             </ol>
                         </div>
                     </div>
@@ -314,9 +318,9 @@
                         <div class="um-content">
                             <div class="um-title">Good to Know</div>
                             <ul class="um-list">
-                                <li>Arriving <strong>11+ mins late</strong> → status auto-changes to <strong>Late</strong>.</li>
+                                <li>Arriving <strong>6+ mins late</strong> → status auto-changes to <strong>Late</strong>.</li>
                                 <li>Working <strong>10+ hours</strong> → status auto-upgrades to <strong>Overtime</strong>.</li>
-                                <li><strong>Flex</strong> — no late penalty. &nbsp;<strong>Float</strong> — logging not required.</li>
+                                <li><strong>Flex</strong> — no late penalty on arrival. However, if total hours worked is <strong>less than 9 hours</strong>, status is automatically set to <strong>Late</strong>. &nbsp;<strong>Float</strong> — logging not required.</li>
                                 <li>For <strong>night shifts (12:00 AM)</strong>, always use the shift's date, not the night before.</li>
                                 <li>Click the <strong style="color:#0ea5e9;"><i class="bi bi-globe2"></i> globe icon</strong> beside Date for timezone logging.</li>
                             </ul>
@@ -872,27 +876,67 @@
                 </div>
                 <!-- Body -->
                 <div class="modal-body" style="background:#fff;padding:1.5rem;">
-                    <!-- Alert banner -->
-                    <div style="background:linear-gradient(135deg,#fff1f2,#ffe4e6);border:1px solid #fecaca;border-radius:12px;padding:0.75rem 1rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:0.6rem;">
-                        <i class="bi bi-shield-exclamation" style="color:#ef4444;font-size:1rem;flex-shrink:0;"></i>
-                        <span style="font-size:0.78rem;color:#991b1b;font-weight:500;">This will mark you as <strong>Undertime</strong>. Use Return to resume your shift.</span>
+
+                    <!-- Mode selector -->
+                    <div class="d-flex gap-2 mb-4">
+                        <button type="button" id="eoModeWaiting" onclick="setEarlyOutMode('waiting')"
+                            style="flex:1;border-radius:12px;border:2px solid #6366f1;background:#eef2ff;color:#4f46e5;font-weight:700;font-size:0.8rem;height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:all 0.18s;">
+                            <i class="bi bi-hourglass-split" style="font-size:1.1rem;"></i>
+                            <span>Emergency Time In</span>
+                        </button>
+                        <button type="button" id="eoModeEmergency" onclick="setEarlyOutMode('emergency')"
+                            style="flex:1;border-radius:12px;border:2px solid #e2e8f0;background:#f8fafc;color:#64748b;font-weight:700;font-size:0.8rem;height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:all 0.18s;">
+                            <i class="bi bi-exclamation-octagon-fill" style="font-size:1.1rem;"></i>
+                            <span>Emergency Out</span>
+                        </button>
                     </div>
-                    <!-- Time Out field -->
-                    <div class="mb-4">
-                        <label class="form-label" style="font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Time Out</label>
-                        <div style="position:relative;">
-                            <i class="bi bi-clock-fill" style="position:absolute;left:0.85rem;top:50%;transform:translateY(-50%);color:#ef4444;font-size:0.9rem;pointer-events:none;"></i>
-                            <input type="time" class="form-control" id="earlyOutTime" aria-label="Emergency Out Time"
-                                style="padding-left:2.4rem;border-radius:12px;border:1.5px solid #e2e8f0;font-size:0.95rem;height:46px;font-weight:600;color:#1e293b;transition:border-color 0.2s;">
+
+                    <!-- Emergency Time In panel -->
+                    <div id="eoWaitingPanel">
+                        <div style="background:linear-gradient(135deg,#eef2ff,#e0e7ff);border:1px solid #c7d2fe;border-radius:12px;padding:0.75rem 1rem;margin-bottom:1.1rem;display:flex;align-items:center;gap:0.6rem;">
+                            <i class="bi bi-info-circle-fill" style="color:#6366f1;font-size:1rem;flex-shrink:0;"></i>
+                            <span style="font-size:0.78rem;color:#3730a3;font-weight:500;">Enter your actual arrival time. It will be set directly as your <strong>Time In</strong> in the attendance form.</span>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" style="font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Actual Time In</label>
+                            <div style="position:relative;">
+                                <i class="bi bi-box-arrow-in-right" style="position:absolute;left:0.85rem;top:50%;transform:translateY(-50%);color:#6366f1;font-size:0.9rem;pointer-events:none;"></i>
+                                <input type="time" class="form-control" id="earlyOutManualTimeIn" aria-label="Emergency Time In"
+                                    style="padding-left:2.4rem;border-radius:12px;border:1.5px solid #c7d2fe;font-size:0.95rem;height:46px;font-weight:600;color:#1e293b;">
+                            </div>
+                        </div>
+                        <div class="mb-1">
+                            <label for="emergencyTimeInReason" class="form-label" style="font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Reason <span style="color:#ef4444;font-weight:700;">*</span></label>
+                            <textarea class="form-control" id="emergencyTimeInReason" rows="2"
+                                placeholder="e.g. waiting outside before office opened, system was not yet available..."
+                                oninput="onEmergencyTimeInReasonInput()"
+                                style="border-radius:12px;border:1.5px solid #c7d2fe;font-size:0.85rem;resize:none;padding:0.75rem 1rem;color:#334155;"></textarea>
+                            <div id="emergencyTimeInReasonError" style="font-size:0.72rem;color:#ef4444;margin-top:0.3rem;display:none;"><i class="bi bi-exclamation-circle-fill me-1"></i>Reason is required to set Emergency Time In.</div>
                         </div>
                     </div>
-                    <!-- Reason field -->
-                    <div class="mb-1">
-                        <label for="earlyOutReason" class="form-label" style="font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Reason <span style="color:#94a3b8;font-weight:400;text-transform:none;">(optional)</span></label>
-                        <textarea class="form-control" id="earlyOutReason" rows="3"
-                            placeholder="e.g. medical appointment, family emergency, important errand..."
-                            style="border-radius:12px;border:1.5px solid #e2e8f0;font-size:0.85rem;resize:none;padding:0.75rem 1rem;color:#334155;"></textarea>
+
+                    <!-- Emergency Out panel -->
+                    <div id="eoEmergencyPanel" style="display:none;">
+                        <div style="background:linear-gradient(135deg,#fff1f2,#ffe4e6);border:1px solid #fecaca;border-radius:12px;padding:0.75rem 1rem;margin-bottom:1.1rem;display:flex;align-items:center;gap:0.6rem;">
+                            <i class="bi bi-shield-exclamation" style="color:#ef4444;font-size:1rem;flex-shrink:0;"></i>
+                            <span style="font-size:0.78rem;color:#991b1b;font-weight:500;">This will mark you as <strong>Undertime</strong>. Use Return to resume your shift.</span>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" style="font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Time Out</label>
+                            <div style="position:relative;">
+                                <i class="bi bi-clock-fill" style="position:absolute;left:0.85rem;top:50%;transform:translateY(-50%);color:#ef4444;font-size:0.9rem;pointer-events:none;"></i>
+                                <input type="time" class="form-control" id="earlyOutTime" aria-label="Emergency Out Time"
+                                    style="padding-left:2.4rem;border-radius:12px;border:1.5px solid #e2e8f0;font-size:0.95rem;height:46px;font-weight:600;color:#1e293b;">
+                            </div>
+                        </div>
+                        <div class="mb-1">
+                            <label for="earlyOutReason" class="form-label" style="font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Reason <span style="color:#94a3b8;font-weight:400;text-transform:none;">(optional)</span></label>
+                            <textarea class="form-control" id="earlyOutReason" rows="2"
+                                placeholder="e.g. medical appointment, family emergency..."
+                                style="border-radius:12px;border:1.5px solid #e2e8f0;font-size:0.85rem;resize:none;padding:0.75rem 1rem;color:#334155;"></textarea>
+                        </div>
                     </div>
+
                 </div>
                 <!-- Footer -->
                 <div style="background:#f8fafc;padding:1rem 1.5rem 1.4rem;border:none;display:flex;gap:0.6rem;">
@@ -901,10 +945,10 @@
                         style="flex:1;border-radius:12px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-weight:600;font-size:0.85rem;height:42px;">
                         Cancel
                     </button>
-                    <button type="button" class="btn btn-sm"
+                    <button type="button" class="btn btn-sm" id="eoConfirmBtn"
                         onclick="submitEarlyOut()"
-                        style="flex:2;border-radius:12px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;font-weight:700;font-size:0.85rem;height:42px;border:none;box-shadow:0 4px 14px rgba(239,68,68,0.4);display:flex;align-items:center;justify-content:center;gap:0.4rem;">
-                        <i class="bi bi-check-circle-fill"></i> Confirm Emergency Out
+                        style="flex:2;border-radius:12px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;font-weight:700;font-size:0.85rem;height:42px;border:none;box-shadow:0 4px 14px rgba(99,102,241,0.4);display:flex;align-items:center;justify-content:center;gap:0.4rem;">
+                        <i class="bi bi-check-circle-fill"></i> <span id="eoConfirmLabel">Set Time In</span>
                     </button>
                 </div>
             </div>

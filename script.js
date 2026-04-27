@@ -1111,12 +1111,12 @@ function saveAttendanceData(data) {
     storage.setItem('attendanceData', JSON.stringify(data));
 }
 
-// RV late minutes use an 11-minute grace period:
-// e.g. 9:13 vs 9:00 schedule => 2 late minutes.
+// RV late minutes use an 6-minute grace period:
+// e.g. 9:08 vs 9:00 schedule => 2 late minutes.
 function computeLateMinutes(diffMinutes, department) {
     const diff = Number(diffMinutes) || 0;
     if (department === 'rv') {
-        return Math.max(0, diff - 11);
+        return Math.max(0, diff - 6);
     }
     return Math.max(0, diff);
 }
@@ -1651,7 +1651,7 @@ document.getElementById('attendanceForm').addEventListener('submit', async funct
             const delayMinutes = timeMinutes - schedMinutes;
             lateMinutes = computeLateMinutes(delayMinutes, currentDepartment);
             
-            if (delayMinutes >= 11) {
+            if (delayMinutes >= 6) {
                 status = 'Late';
             } else {
                 lateMinutes = 0;
@@ -1684,7 +1684,13 @@ document.getElementById('attendanceForm').addEventListener('submit', async funct
         const scheduleMeta = getScheduleForDate(employee, recordDate);
         totalHours = calculateWorkedHoursBySchedule(timeIn, timeOut, scheduleMeta);
     }
-    
+
+    // Flex late detection: if Flex employee times out with < 9 hours worked, mark as Late
+    if (notes.includes('FLEX') && !notes.includes('FLOAT') && timeIn && timeOut && !existingRecordId && totalHours < 9 && (status === 'Present' || status === 'Overtime')) {
+        status = 'Late';
+        lateMinutes = Math.round((9 - totalHours) * 60);
+    }
+
     // Also check for any existing record on the same date (catches early-out re-submit)
     if (!existingRecordId) {
         const sameDay = attendanceData.find(r =>
@@ -1756,6 +1762,11 @@ document.getElementById('attendanceForm').addEventListener('submit', async funct
                 // If total hours >= 10, override status to Overtime
                 else if (totalHours >= 10 && (attendanceData[recordIndex].status === 'Present' || attendanceData[recordIndex].status === 'Late')) {
                     attendanceData[recordIndex].status = 'Overtime';
+                }
+                // Flex late detection on Time Out: < 9 hours worked
+                else if (notes.includes('FLEX') && !notes.includes('FLOAT') && timeOut && totalHours < 9 && (attendanceData[recordIndex].status === 'Present')) {
+                    attendanceData[recordIndex].status = 'Late';
+                    attendanceData[recordIndex].lateMinutes = Math.round((9 - totalHours) * 60);
                 }
             }
         }
@@ -2414,6 +2425,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const hours = now.getHours().toString().padStart(2, '0');
                 const minutes = now.getMinutes().toString().padStart(2, '0');
                 this.value = `${hours}:${minutes}`;
+                this.style.color = '#7f1d1d';
+                this.style.fontWeight = '700';
 
                 showNotification('Time automatically captured and locked for security', 'info');
             }
@@ -3079,29 +3092,126 @@ function openEarlyOutModal() {
     const now = new Date();
     const hours = now.getHours().toString().padStart(2, '0');
     const minutes = now.getMinutes().toString().padStart(2, '0');
-    document.getElementById('earlyOutTime').value = `${hours}:${minutes}`;
+    const currentTime = `${hours}:${minutes}`;
+
+    document.getElementById('earlyOutTime').value = currentTime;
     document.getElementById('earlyOutReason').value = '';
+    document.getElementById('earlyOutManualTimeIn').value = currentTime;
+    document.getElementById('emergencyTimeInReason').value = '';
+    document.getElementById('emergencyTimeInReasonError').style.display = 'none';
+
+    // Default to Emergency Time In mode
+    setEarlyOutMode('waiting');
+
     const modal = new bootstrap.Modal(document.getElementById('earlyOutModal'));
     modal.show();
 }
 
+function setEarlyOutMode(mode) {
+    const waitingBtn = document.getElementById('eoModeWaiting');
+    const emergencyBtn = document.getElementById('eoModeEmergency');
+    const waitingPanel = document.getElementById('eoWaitingPanel');
+    const emergencyPanel = document.getElementById('eoEmergencyPanel');
+    const confirmBtn = document.getElementById('eoConfirmBtn');
+    const confirmLabel = document.getElementById('eoConfirmLabel');
+
+    if (mode === 'waiting') {
+        waitingBtn.style.border = '2px solid #6366f1';
+        waitingBtn.style.background = '#eef2ff';
+        waitingBtn.style.color = '#4f46e5';
+        emergencyBtn.style.border = '2px solid #e2e8f0';
+        emergencyBtn.style.background = '#f8fafc';
+        emergencyBtn.style.color = '#64748b';
+        waitingPanel.style.display = '';
+        emergencyPanel.style.display = 'none';
+        confirmBtn.style.background = 'linear-gradient(135deg,#6366f1,#4f46e5)';
+        confirmBtn.style.boxShadow = '0 4px 14px rgba(99,102,241,0.4)';
+        confirmLabel.textContent = 'Set Time In';
+        // Lock confirm button until reason is filled
+        const reason = document.getElementById('emergencyTimeInReason').value.trim();
+        confirmBtn.disabled = !reason;
+        confirmBtn.style.opacity = reason ? '1' : '0.5';
+    } else {
+        emergencyBtn.style.border = '2px solid #ef4444';
+        emergencyBtn.style.background = '#fff1f2';
+        emergencyBtn.style.color = '#dc2626';
+        waitingBtn.style.border = '2px solid #e2e8f0';
+        waitingBtn.style.background = '#f8fafc';
+        waitingBtn.style.color = '#64748b';
+        emergencyPanel.style.display = '';
+        waitingPanel.style.display = 'none';
+        confirmBtn.style.background = 'linear-gradient(135deg,#ef4444,#dc2626)';
+        confirmBtn.style.boxShadow = '0 4px 14px rgba(239,68,68,0.4)';
+        confirmLabel.textContent = 'Confirm Emergency Out';
+        // Emergency Out reason is optional — always unlocked
+        confirmBtn.disabled = false;
+        confirmBtn.style.opacity = '1';
+    }
+    confirmBtn.dataset.eoMode = mode;
+}
+
+function onEmergencyTimeInReasonInput() {
+    const reason = document.getElementById('emergencyTimeInReason').value.trim();
+    const confirmBtn = document.getElementById('eoConfirmBtn');
+    const errorEl = document.getElementById('emergencyTimeInReasonError');
+    const isWaitingMode = confirmBtn.dataset.eoMode === 'waiting';
+    if (!isWaitingMode) return;
+    confirmBtn.disabled = !reason;
+    confirmBtn.style.opacity = reason ? '1' : '0.5';
+    errorEl.style.display = reason ? 'none' : '';
+}
+
 // Submit Early Out
 function submitEarlyOut() {
-    const time = document.getElementById('earlyOutTime').value;
-    const reason = document.getElementById('earlyOutReason').value.trim();
+    const mode = document.getElementById('eoConfirmBtn')?.dataset.eoMode || 'emergency';
 
-    if (!time) {
-        showNotification('Please set a time out', 'warning');
-        return;
-    }
-
-    // Create or update a provisional attendance record immediately so
-    // Emergency Out pauses the working session and Return Work can resume it later.
     const employeeNameInput = document.getElementById('employeeName');
     const name = employeeNameInput.value?.trim();
     const date = document.getElementById('attendanceDate').value || getLocalISODate();
     if (!name) {
         showNotification('Select an employee first', 'warning');
+        return;
+    }
+
+    // ── WAITING TIME IN MODE ──────────────────────────────────────────
+    if (mode === 'waiting') {
+        const manualTimeIn = document.getElementById('earlyOutManualTimeIn').value;
+        const timeInReason = document.getElementById('emergencyTimeInReason').value.trim();
+        const errorEl = document.getElementById('emergencyTimeInReasonError');
+
+        if (!manualTimeIn) {
+            showNotification('Please enter your actual Time In', 'warning');
+            return;
+        }
+        if (!timeInReason) {
+            errorEl.style.display = '';
+            document.getElementById('emergencyTimeInReason').focus();
+            return;
+        }
+        errorEl.style.display = 'none';
+
+        // Set the Time In field in the attendance form directly
+        const timeInField = document.getElementById('timeIn');
+        if (timeInField) {
+            timeInField.value = manualTimeIn;
+            timeInField.style.color = '#7f1d1d';
+            timeInField.style.fontWeight = '700';
+        }
+        // Store the reason so it gets saved with the record on submit
+        document.getElementById('attendanceReason').value = `Emergency Time In: ${timeInReason}`;
+
+        document.activeElement?.blur();
+        bootstrap.Modal.getInstance(document.getElementById('earlyOutModal'))?.hide();
+        showNotification(`Time In set to ${formatTime(manualTimeIn)}. Now select your Status and submit.`, 'success');
+        return;
+    }
+
+    // ── EMERGENCY OUT MODE ────────────────────────────────────────────
+    const time = document.getElementById('earlyOutTime').value;
+    const reason = document.getElementById('earlyOutReason').value.trim();
+
+    if (!time) {
+        showNotification('Please set a time out', 'warning');
         return;
     }
 
@@ -3136,16 +3246,17 @@ function submitEarlyOut() {
         record.reason = reasonText;
         record.earlyOut = true;
     } else {
-        // No open record — create provisional early-out record
+        // No open record — create provisional early-out record using manual Time In if provided
         const tzEarly = document.getElementById('timezoneSelect') ? document.getElementById('timezoneSelect').value : '';
+        const effectiveTimeIn = manualTimeIn || '';
         const newRecord = {
             id: Date.now(),
             name: name,
             date: date,
             status: 'Undertime',
-            timeIn: '',
+            timeIn: effectiveTimeIn,
             timeOut: time,
-            totalHours: 0,
+            totalHours: computeHours(effectiveTimeIn, time),
             scheduleTime: '',
             lateMinutes: 0,
             reason: reasonText,
