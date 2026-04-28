@@ -1795,6 +1795,7 @@ document.getElementById('attendanceForm').addEventListener('submit', async funct
     // Reset form
     this.reset();
     setDefaultDate();
+    document.getElementById('attendanceReason').value = '';
     document.getElementById('employeeName').removeAttribute('data-existing-record-id');
     document.getElementById('employeeName').removeAttribute('data-early-out-record-id');
     document.getElementById('earlyOutBtn').style.display = 'inline-flex';
@@ -2336,8 +2337,8 @@ function viewEmployeeDetails(employeeName) {
 
         tdActions.appendChild(editBtn);
 
-        // Show reason button if record has any reason (Early Out, etc.)
-        const reasonText = r.reason || r.attendanceReason || '';
+        // Show reason button ONLY if record has a non-empty reason
+        const reasonText = (r.reason || '').toString().trim();
         if (reasonText) {
             const reasonBtn = document.createElement('button');
             reasonBtn.className = 'btn btn-sm btn-outline-warning ms-1';
@@ -2718,7 +2719,7 @@ function viewEmployeeMonthDetails(employeeName, month, year) {
         editBtn.addEventListener('click', () => editAttendanceRecord(safeRId));
         tdActions.appendChild(editBtn);
 
-        const reasonText = r.reason || r.attendanceReason || '';
+        const reasonText = (r.reason || '').toString().trim();
         if (reasonText) {
             const reasonBtn = document.createElement('button');
             reasonBtn.className = 'btn btn-sm btn-outline-warning ms-1';
@@ -2804,7 +2805,7 @@ function filterDetailWeek(input, employeeName, month, year) {
         editBtn.innerHTML = '<i class="bi bi-pencil"></i>';
         editBtn.addEventListener('click', () => editAttendanceRecord(safeRId));
         tdActions.appendChild(editBtn);
-        const reasonText = r.reason || r.attendanceReason || '';
+        const reasonText = (r.reason || '').toString().trim();
         if (reasonText) {
             const reasonBtn = document.createElement('button');
             reasonBtn.className = 'btn btn-sm btn-outline-warning ms-1'; reasonBtn.title = 'View Reason';
@@ -3672,6 +3673,9 @@ function addEmployeeNameListener() {
         employeeNameInput.removeAttribute('data-existing-record-id');
         employeeNameInput.removeAttribute('data-early-out-record-id');
         employeeNameInput.removeAttribute('data-flex');
+
+        // Clear reason so it doesn't carry over to a different employee
+        document.getElementById('attendanceReason').value = '';
 
         // Hide schedule display while typing
         const schedRow = document.getElementById('scheduleDisplayRow');
