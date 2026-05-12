@@ -1047,7 +1047,9 @@ function getStatusBadgeClass(status) {
         'AWOL': 'status-awol',
         'Sick Leave': 'status-sick',
         'Work From Home': 'status-wfh',
-        'No Schedule': 'status-ns'
+        'No Schedule': 'status-ns',
+        'Holiday': 'status-holiday'
+        
     };
     return statusMap[status] || 'status-present';
 }
@@ -1404,6 +1406,9 @@ function updateDashboard() {
                 case 'No Schedule':
                     stats.noSchedule++;
                     break;
+                case 'Holiday':
+                    stats.holiday++;
+                    break;
             }
         }
     });
@@ -1508,7 +1513,7 @@ document.getElementById('attendanceForm').addEventListener('submit', async funct
     const existingRecordId = document.getElementById('employeeName').getAttribute('data-existing-record-id');
 
     // Require Time In for statuses that need it (not Absent, Sick Leave, AWOL, No Schedule)
-    const statusNeedsTimeIn = !existingRecordId && !['Absent', 'Sick Leave', 'AWOL', 'No Schedule'].includes(status);
+    const statusNeedsTimeIn = !existingRecordId && !['Absent', 'Sick Leave', 'AWOL', 'No Schedule','Holiday'].includes(status);
     if (statusNeedsTimeIn && !timeIn) {
         const timeInEl = document.getElementById('timeIn');
         timeInEl.style.borderColor = '#ef4444';
@@ -2451,7 +2456,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const timeInField = document.getElementById('timeIn');
     const timeOutField = document.getElementById('timeOut');
     statusSelect.addEventListener('change', function() {
-        const isAbsent = this.value === 'Absent' || this.value === 'Sick Leave';
+        const isAbsent = this.value === 'Absent' || this.value === 'Sick Leave' || this.value === 'Holiday';
         if (isAbsent) {
             timeInField.value = '';
             timeInField.disabled = true;
@@ -3886,7 +3891,9 @@ function seedTestData() {
         // Bob: Absent today -> should NOT count
         { id: Date.now() + 203, name: 'Bob', date: today, timeIn: '', timeOut: '', status: 'Absent', totalHours: 0, department: currentDepartment },
         // Bob: WFH yesterday -> should NOT count
-        { id: Date.now() + 204, name: 'Bob', date: yesterday, timeIn: '09:00', timeOut: '18:00', status: 'Work From Home', totalHours: 9, department: currentDepartment }
+        { id: Date.now() + 204, name: 'Bob', date: yesterday, timeIn: '09:00', timeOut: '18:00', status: 'Work From Home', totalHours: 9, department: currentDepartment },
+
+        { id: Date.now() + 205, name: 'Bob', date: today, timeIn: '', timeOut: '', status: 'Holiday', totalHours: 0, department: currentDepartment },
     ];
 
     storage.setItem('employees', JSON.stringify(employees));

@@ -702,6 +702,11 @@ body.coms-active {
     color: #065f46;
 }
 
+.status-holiday {
+    background: #FF775C;
+    color: #f3f3f3;
+}
+
 .badge {
     padding: 0.3rem 0.6rem;
     border-radius: 10px;

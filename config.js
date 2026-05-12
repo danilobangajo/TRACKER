@@ -1,5 +1,5 @@
 
-const GOOGLE_SHEETS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzV1H8I5DZr2TsBwU0JzvSgURUZgCvl-8whXeAlCLCg-qniE58Du_EaQvDmO_S1c3gt/exec';
+const GOOGLE_SHEETS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzIfh3LLuHhsDfpXXDjRJIBIP45GDMGPfysqzpG8ZHGE6NwcrGn0zGbj8lXMeZMyhwj/exec';
 
 // Sync to Google Sheets
 async function syncToGoogleSheets(type, data) {
